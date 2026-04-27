@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ─────────────────────────────────────────────────
+model User {
+  id               String   @id @default(cuid())
+  name             String
+  email            String   @unique
+  password         String
+  age              Int?
+  weight           Float?
+  height           Float?
+  gender           String?
+  goal             String?        // e.g. "lose", "maintain", "gain"
+  activityLevel    String?        // e.g. "sedentary", "light", "moderate", "active", "very_active"
+  dailyCalorieGoal Int      @default(2000)
+  dailyWaterGoalMl Int      @default(2500)
+  createdAt        DateTime @default(now())
+
+  dailyLogs DailyLog[]
+}
+
+// ─── Food Item (master database) ──────────────────────────
+model FoodItem {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String?
+  category    String?
+  servingSize Float    @default(100)
+  servingUnit String   @default("g")
+  caloriesPer Float           // calories per serving
+  proteinG    Float    @default(0)
+  carbsG      Float    @default(0)
+  fatG        Float    @default(0)
+  fibreG      Float    @default(0)
+  sugarG      Float    @default(0)
+  sodiumMg    Float    @default(0)
+  isVerified  Boolean  @default(false)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+
+  mealEntries MealEntry[]
+}
+
+// ─── Daily Log (one per user per day) ─────────────────────
+model DailyLog {
+  id              String   @id @default(cuid())
+  userId          String
+  date            String         // format: "YYYY-MM-DD"
+  totalCalories   Float    @default(0)
+  totalProteinG   Float    @default(0)
+  totalCarbsG     Float    @default(0)
+  totalFatG       Float    @default(0)
+  totalWaterMl    Float    @default(0)
+
+  user         User         @relation(fields: [userId], references: [id])
+  mealEntries  MealEntry[]
+  waterEntries WaterEntry[]
+
+  @@unique([userId, date])
+}
+
+// ─── Meal Entry ───────────────────────────────────────────
+model MealEntry {
+  id         String   @id @default(cuid())
+  dailyLogId String
+  mealType   String         // "breakfast", "lunch", "snacks", "dinner"
+  foodItemId String
+  quantity   Float
+  unit       String
+  calories   Float
+  proteinG   Float    @default(0)
+  carbsG     Float    @default(0)
+  fatG       Float    @default(0)
+  loggedAt   DateTime @default(now())
+
+  dailyLog DailyLog @relation(fields: [dailyLogId], references: [id])
+  foodItem FoodItem @relation(fields: [foodItemId], references: [id])
+}
+
+// ─── Water Entry ──────────────────────────────────────────
+model WaterEntry {
+  id         String   @id @default(cuid())
+  dailyLogId String
+  amountMl   Float
+  loggedAt   DateTime @default(now())
+
+  dailyLog DailyLog @relation(fields: [dailyLogId], references: [id])
+}

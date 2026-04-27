@@ -1,0 +1,21 @@
+{
+  "name": "PureIntake",
+  "short_name": "PureIntake",
+  "description": "Track smarter. Eat better. PureIntake calorie and nutrition tracker.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#22c55e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

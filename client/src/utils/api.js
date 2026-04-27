@@ -1,0 +1,116 @@
+import axios from "axios";
+import toast from "react-hot-toast";
+
+const api = axios.create({
+  baseURL: "/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Request interceptor — attach JWT token to every request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("pureintake_token") || sessionStorage.getItem("pureintake_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor — handle 401 errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (!error.response && error.request) {
+      toast.error("Check your internet connection");
+    }
+
+    if (error.response && error.response.status === 401) {
+      // Clear stored credentials from both storages
+      localStorage.removeItem("pureintake_token");
+      localStorage.removeItem("pureintake_user");
+      sessionStorage.removeItem("pureintake_token");
+      sessionStorage.removeItem("pureintake_user");
+
+      // Redirect to login (if not already there)
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login?expired=true";
+      }
+    }
+    
+    // Default API error toast messages
+    if (error.response && error.response.status !== 401) {
+       const message = error.response.data?.error || "Operation failed";
+       if (error.response.status >= 500) {
+         toast.error(message);
+       }
+    }
+    return Promise.reject(error);
+  }
+);
+
+const searchCache = new Map();
+
+export const foodAPI = {
+  search: async (q = "", category = null) => {
+    const key = `${q}|${category || ""}`;
+    if (searchCache.has(key)) {
+      return Promise.resolve({ data: searchCache.get(key) });
+    }
+    const params = { q };
+    if (category) params.category = category;
+    const res = await api.get("/food/search", { params });
+    searchCache.set(key, res.data);
+    return res;
+  },
+  getById: (id) => api.get(`/food/${id}`),
+  create: (foodData) => api.post("/food", foodData),
+  getCategories: () => api.get("/food/categories"),
+};
+
+export const mealsAPI = {
+  getToday: (date = null) =>
+    api.get("/meals/today", { params: date ? { date } : {} }),
+  create: (mealData) => api.post("/meals", mealData),
+  remove: (id) => api.delete(`/meals/${id}`),
+};
+
+export const waterAPI = {
+  getToday: (date = null) =>
+    api.get("/water/today", { params: date ? { date } : {} }),
+  create: (waterData) => api.post("/water", waterData),
+  remove: (id) => api.delete(`/water/${id}`),
+};
+
+export const logsAPI = {
+  getToday: (date = null) =>
+    api.get("/logs/today", { params: date ? { date } : {} }),
+  resetToday: (date = null) =>
+    api.delete("/logs/today", { params: date ? { date } : {} }),
+  getMonth: (month, year) => api.get("/logs/month", { params: { month, year } }),
+  getByDate: (date) => api.get(`/logs/${date}`),
+};
+
+export const adminAPI = {
+  analyzeBulkUploadFoods: (items, format = "mixed") =>
+    api.post("/food/bulk/analyze", { items, format }),
+  bulkUploadFoods: (items, format = "mixed") => api.post("/food/bulk", { items, format }),
+  getBulkUploadHistory: () => api.get("/food/bulk/history"),
+};
+
+export const authAPI = {
+  updateProfile: (payload) => api.patch("/auth/me", payload),
+};
+
+export const mealSectionsAPI = {
+  getAll: () => api.get("/meal-sections"),
+  create: (data) => api.post("/meal-sections", data),
+  update: (id, data) => api.patch(`/meal-sections/${id}`, data),
+  remove: (id) => api.delete(`/meal-sections/${id}`),
+  reorder: (orderIds) => api.patch("/meal-sections/reorder", { orderIds }),
+};
+
+export default api;
