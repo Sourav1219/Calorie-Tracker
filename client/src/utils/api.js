@@ -26,7 +26,7 @@ export const getLocalDateKey = (date = new Date()) => {
 // Request interceptor — attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("pureintake_token") || sessionStorage.getItem("pureintake_token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -45,10 +45,10 @@ api.interceptors.response.use(
 
     if (error.response && error.response.status === 401) {
       // Clear stored credentials from both storages
-      localStorage.removeItem("pureintake_token");
-      localStorage.removeItem("pureintake_user");
-      sessionStorage.removeItem("pureintake_token");
-      sessionStorage.removeItem("pureintake_user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
 
       // Redirect to login (if not already there)
       if (window.location.pathname !== "/login") {

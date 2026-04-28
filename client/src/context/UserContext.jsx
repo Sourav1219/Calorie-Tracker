@@ -4,8 +4,8 @@ import api from "../utils/api";
 const UserContext = createContext(null);
 
 /* ─── Storage helpers ────────────────────────────────────── */
-const TOKEN_KEY = "pureintake_token";
-const USER_KEY = "pureintake_user";
+const TOKEN_KEY = "token";
+const USER_KEY = "user";
 
 /**
  * Try to read a value from localStorage first, then sessionStorage.
