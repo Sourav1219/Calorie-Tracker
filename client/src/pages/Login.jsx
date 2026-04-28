@@ -40,10 +40,15 @@ export default function Login() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
       });
+
+      // ✅ SAVE TOKEN & USER (Updates state and localStorage)
       login(res.data.user, res.data.token, rememberMe);
+
+      // ✅ Redirect
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed. Please try again.");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
