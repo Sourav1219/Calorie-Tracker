@@ -101,10 +101,11 @@ export default function Navbar() {
 
   return (
     <nav
-      className="absolute top-0 left-0 right-0 z-50 backdrop-blur-lg"
+      className="relative z-50 backdrop-blur-lg flex-shrink-0"
       style={{
         background: "rgba(249, 250, 251, 0.8)",
         borderBottom: "1px solid var(--border-default)",
+        paddingTop: "env(safe-area-inset-top)",
       }}
     >
       <div className="max-w-lg md:max-w-4xl mx-auto px-4 h-14 flex items-center justify-between relative">

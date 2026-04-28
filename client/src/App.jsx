@@ -33,7 +33,7 @@ function App() {
     <div className="app-mobile-shell">
       {isLoggedIn && <Navbar />}
 
-      <div className={`app-mobile-content ${isLoggedIn ? 'pt-14 pb-16' : ''}`}>
+      <div className="app-mobile-content">
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login />} />

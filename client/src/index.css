@@ -152,7 +152,11 @@ body {
   font-family: "DM Sans", system-ui, -apple-system, sans-serif;
   background-color: var(--color-background);
   color: var(--color-text);
-  height: 100vh;
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent body scroll, use shell instead */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Faster taps on mobile — removes 300ms delay */
@@ -172,7 +176,8 @@ input[type="number"] {
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
 }
 
 .app-mobile-shell {
@@ -182,9 +187,8 @@ input[type="number"] {
   display: flex;
   flex-direction: column;
   position: relative;
-  /* Safe area for notched phones */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
+  overscroll-behavior: none; /* Prevents the 'pull to refresh' bounce on the shell itself */
 }
 
 .app-mobile-content {
@@ -284,7 +288,7 @@ input[type="number"] {
   }
 
   .page-container {
-    @apply w-full max-w-md md:max-w-4xl mx-auto px-4 pb-24 pt-4;
+    @apply w-full max-w-md md:max-w-4xl mx-auto px-4 pb-8 pt-4;
   }
 
   .section-title {
