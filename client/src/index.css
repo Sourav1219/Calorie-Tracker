@@ -199,17 +199,18 @@ input[type="number"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    background: #eef2f9;
+    padding: 24px;
+    background: #f0f2f5;
   }
 
   .app-mobile-shell {
-    width: 400px;
-    height: 850px;
-    max-height: calc(100vh - 40px);
-    border-radius: 40px;
+    width: 480px; /* Increased from 400px for a more 'normal' web feel */
+    height: 900px;
+    max-height: calc(100vh - 48px);
+    border-radius: 32px;
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15), 0 18px 36px -18px rgba(0, 0, 0, 0.1);
+    border: 8px solid #ffffff; /* Modern clean border look */
   }
 }
 

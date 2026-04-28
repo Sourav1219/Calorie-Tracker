@@ -20,9 +20,11 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: "var(--bg-page)" }}>
-        <div className="w-10 h-10 border-4 rounded-full animate-spin" style={{ borderColor: "var(--border-default)", borderTopColor: "var(--green-primary)" }} />
-        <p className="mt-3 text-sm font-medium" style={{ color: "var(--text-muted)" }}>Loading...</p>
+      <div className="app-mobile-shell">
+        <div className="flex flex-col items-center justify-center flex-1" style={{ background: "var(--bg-page)" }}>
+          <div className="w-10 h-10 border-4 rounded-full animate-spin" style={{ borderColor: "var(--border-default)", borderTopColor: "var(--green-primary)" }} />
+          <p className="mt-3 text-sm font-medium" style={{ color: "var(--text-muted)" }}>Loading PureIntake...</p>
+        </div>
       </div>
     );
   }
