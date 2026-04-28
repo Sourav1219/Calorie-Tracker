@@ -29,6 +29,7 @@ export default function Login() {
   const isFormValid = form.email.trim() && form.password;
 
   const handleSubmit = async (e) => {
+    if (window.loginDebug) console.log("LOGIN FUNCTION RUNNING");
     e.preventDefault();
     if (!isFormValid) return setError("Email and password are required");
 
