@@ -199,18 +199,18 @@ input[type="number"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 16px;
     background: #f0f2f5;
   }
 
   .app-mobile-shell {
-    width: 480px; /* Increased from 400px for a more 'normal' web feel */
-    height: 900px;
-    max-height: calc(100vh - 48px);
+    width: 420px; /* More conservative width to ensure mobile-first feel */
+    height: 860px;
+    max-height: calc(100vh - 32px);
     border-radius: 32px;
     overflow: hidden;
-    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15), 0 18px 36px -18px rgba(0, 0, 0, 0.1);
-    border: 8px solid #ffffff; /* Modern clean border look */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0,0,0,0.05); /* Very thin subtle border */
   }
 }
 
@@ -284,7 +284,7 @@ input[type="number"] {
   }
 
   .page-container {
-    @apply max-w-lg md:max-w-4xl mx-auto px-4 pb-24 pt-4;
+    @apply w-full max-w-md md:max-w-4xl mx-auto px-4 pb-24 pt-4;
   }
 
   .section-title {
