@@ -109,7 +109,7 @@ export default function Navbar() {
     >
       <div className="max-w-lg md:max-w-4xl mx-auto px-4 h-14 flex items-center justify-between relative">
         <div className="flex items-center">
-          <Link to="/" className="flex flex-col">
+          <Link to="/dashboard" className="flex flex-col">
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>{today}</p>
             <h2 className="text-sm font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
               🥗 PureIntake

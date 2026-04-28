@@ -3,7 +3,7 @@ import { Home, UtensilsCrossed, Droplets, CalendarDays, User } from "lucide-reac
 import { useUser } from "../context/UserContext";
 
 const tabs = [
-  { path: "/", label: "Home", icon: Home, activeColor: "var(--green-primary)", subtleBg: "var(--green-subtle)" },
+  { path: "/dashboard", label: "Home", icon: Home, activeColor: "var(--green-primary)", subtleBg: "var(--green-subtle)" },
   { path: "/log", label: "Log", icon: UtensilsCrossed, activeColor: "var(--green-primary)", subtleBg: "var(--green-subtle)" },
   { path: "/water", label: "Water", icon: Droplets, activeColor: "var(--blue-primary)", subtleBg: "var(--blue-subtle)" },
   { path: "/calendar", label: "Calendar", icon: CalendarDays, activeColor: "var(--green-primary)", subtleBg: "var(--green-subtle)" },

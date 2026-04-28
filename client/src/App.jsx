@@ -34,11 +34,12 @@ function App() {
       <div className={`app-mobile-content ${isLoggedIn ? 'pt-14 pb-16' : ''}`}>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={isLoggedIn ? <Navigate to="/" replace /> : <Login />} />
-          <Route path="/register" element={isLoggedIn ? <Navigate to="/" replace /> : <Register />} />
+          <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login />} />
+          <Route path="/register" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Register />} />
 
           {/* Protected Routes */}
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/log" element={<ProtectedRoute><MealLog /></ProtectedRoute>} />
           <Route path="/food-db" element={<ProtectedRoute><FoodDatabase /></ProtectedRoute>} />
           <Route path="/water" element={<ProtectedRoute><WaterTracker /></ProtectedRoute>} />
@@ -47,7 +48,7 @@ function App() {
           <Route path="/admin/bulk-upload" element={<ProtectedRoute><AdminBulkUpload /></ProtectedRoute>} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>
 

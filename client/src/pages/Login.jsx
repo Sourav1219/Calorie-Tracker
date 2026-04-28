@@ -41,7 +41,7 @@ export default function Login() {
         password: form.password,
       });
       login(res.data.user, res.data.token, rememberMe);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.error || "Login failed. Please try again.");
     } finally {

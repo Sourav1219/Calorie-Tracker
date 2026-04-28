@@ -175,7 +175,7 @@ export default function Register() {
       const res = await api.post("/auth/register", payload);
       login(res.data.user, res.data.token);
       toast.success("Account created! Welcome to PureIntake.");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       toast.error(error.response?.data?.error || "Registration failed.");
     } finally {
