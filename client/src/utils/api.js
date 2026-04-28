@@ -10,6 +10,15 @@ const api = axios.create({
   },
 });
 
+// Helper to get local date in YYYY-MM-DD format
+export const getLocalDateKey = (date = new Date()) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // Request interceptor — attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
@@ -74,24 +83,31 @@ export const foodAPI = {
 };
 
 export const mealsAPI = {
-  getToday: (date = null) =>
-    api.get("/meals/today", { params: date ? { date } : {} }),
-  create: (mealData) => api.post("/meals", mealData),
+  getToday: (date = getLocalDateKey()) =>
+    api.get("/meals/today", { params: { date } }),
+  create: (mealData) => {
+    // Ensure a date is always sent to avoid server-side timezone shifts
+    const data = { date: getLocalDateKey(), ...mealData };
+    return api.post("/meals", data);
+  },
   remove: (id) => api.delete(`/meals/${id}`),
 };
 
 export const waterAPI = {
-  getToday: (date = null) =>
-    api.get("/water/today", { params: date ? { date } : {} }),
-  create: (waterData) => api.post("/water", waterData),
+  getToday: (date = getLocalDateKey()) =>
+    api.get("/water/today", { params: { date } }),
+  create: (waterData) => {
+    const data = { date: getLocalDateKey(), ...waterData };
+    return api.post("/water", data);
+  },
   remove: (id) => api.delete(`/water/${id}`),
 };
 
 export const logsAPI = {
-  getToday: (date = null) =>
-    api.get("/logs/today", { params: date ? { date } : {} }),
-  resetToday: (date = null) =>
-    api.delete("/logs/today", { params: date ? { date } : {} }),
+  getToday: (date = getLocalDateKey()) =>
+    api.get("/logs/today", { params: { date } }),
+  resetToday: (date = getLocalDateKey()) =>
+    api.delete("/logs/today", { params: { date } }),
   getMonth: (month, year) => api.get("/logs/month", { params: { month, year } }),
   getByDate: (date) => api.get(`/logs/${date}`),
 };
