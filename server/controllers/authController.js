@@ -209,6 +209,7 @@ async function register(req, res) {
  */
 async function login(req, res) {
   const { email, password } = req.body;
+  console.log("User login:", email);
 
   try {
     // 1. Find user

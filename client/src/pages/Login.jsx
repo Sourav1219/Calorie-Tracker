@@ -53,7 +53,12 @@ export default function Login() {
       navigate("/dashboard");
     } catch (err) {
       console.error("LOGIN ERROR:", err); // 🔥
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      
+      if (!err.response) {
+        toast.error("Server is starting, please wait a moment...");
+      } else {
+        setError(err.response?.data?.message || "Login failed. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -6,33 +6,16 @@ const jwt = require("jsonwebtoken");
  * Returns 401 if token is missing or invalid.
  */
 const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
   try {
-    // Read header
-    const authHeader = req.headers.authorization;
-
-    // Check it starts with "Bearer "
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "No token provided" });
-    }
-
-    // Extract token
-    const token = authHeader.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({ error: "No token provided" });
-    }
-
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach user payload
     req.user = decoded;
-
-    // Call next
     next();
   } catch (error) {
-    // If it throws
-    return res.status(401).json({ error: "Invalid or expired token" });
+    res.status(401).json({ message: "Invalid token" });
   }
 };
 
