@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { calculateMacroTargets } = require("../utils/macroTargets");
-const { sendLoginEmail } = require("../utils/email");
 
 function parseAdminEmails(raw) {
   if (!raw || !raw.trim()) {
@@ -239,10 +238,7 @@ async function login(req, res) {
       { expiresIn: "7d" }
     );
 
-    // ── 5. Send Email Alert (Async) ──────────────────────────
-    sendLoginEmail(user.email, user.name).catch(err => console.error("Email error:", err));
-
-    // ── 6. Respond ───────────────────────────────────────────
+    // ── 5. Respond ───────────────────────────────────────────
     return res.status(200).json({
       message: "Login successful",
       token,
