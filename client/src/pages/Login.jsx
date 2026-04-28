@@ -41,14 +41,18 @@ export default function Login() {
         password: form.password,
       });
 
+      console.log("LOGIN RESPONSE:", res.data); // 🔥
+
       // ✅ SAVE TOKEN & USER (Updates state and localStorage)
       login(res.data.user, res.data.token, rememberMe);
+
+      console.log("TOKEN SAVED:", localStorage.getItem("token")); // 🔥
 
       // ✅ Redirect
       navigate("/dashboard");
     } catch (err) {
+      console.error("LOGIN ERROR:", err); // 🔥
       setError(err.response?.data?.message || "Login failed. Please try again.");
-      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
