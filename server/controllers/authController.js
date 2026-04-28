@@ -208,47 +208,45 @@ async function register(req, res) {
  * Authenticates a user by email and password, returning a signed JWT.
  */
 async function login(req, res) {
+  const { email, password } = req.body;
+
   try {
-    const { email, password } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
-
-    // ── 1. Validate required fields ──────────────────────────
-    if (!normalizedEmail || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
-    // ── 2. Find user ─────────────────────────────────────────
-    let user = await User.findOne({ email: normalizedEmail });
+    // 1. Find user
+    const user = await User.findOne({ email: email?.toLowerCase().trim() });
     if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(400).json({ message: "User not found" });
     }
 
-    user = await syncAdminRole(user);
+    // 2. Sync admin role if needed
+    await syncAdminRole(user);
 
-    // ── 3. Check password ────────────────────────────────────
+    // 3. Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ── 4. Sign JWT ──────────────────────────────────────────
+    // ✅ CREATE TOKEN (including userId for compatibility with your other routes)
     const token = jwt.sign(
-      { userId: user._id, email: user.email, isAdmin: Boolean(user.isAdmin) },
+      { 
+        userId: user._id, 
+        id: user._id, 
+        email: user.email, 
+        isAdmin: Boolean(user.isAdmin) 
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // ── 5. Respond ───────────────────────────────────────────
-    return res.status(200).json({
-      message: "Login successful",
+    // ✅ SEND TOKEN + USER (including full profile for the Dashboard)
+    res.json({
       token,
       user: toPublicUser(user),
     });
-  } catch (error) {
-    console.error("Login error:", error);
-    return res
-      .status(500)
-      .json({ error: "Something went wrong. Please try again." });
+
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 }
 
