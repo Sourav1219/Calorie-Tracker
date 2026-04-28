@@ -43,18 +43,22 @@ app.use("/api/water", waterRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/meal-sections", mealSectionRoutes);
 
-// ─── Serve Frontend in Production ──────────────────────────
+// ─── Serve Frontend (if deployed together) ──────────────────
 const path = require("path");
+const fs = require("fs");
 if (process.env.NODE_ENV === "production") {
-  // Serve static files from the React app
-  app.use(express.static(path.join(__dirname, "../client/dist")));
+  const clientBuildPath = path.join(__dirname, "../client/dist");
+  if (fs.existsSync(clientBuildPath)) {
+    // Serve static files from the React app
+    app.use(express.static(clientBuildPath));
 
-  // The "catchall" handler: for any request that doesn't
-  // match one above, send back React's index.html file.
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
-    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-  });
+    // The "catchall" handler: for any request that doesn't
+    // match one above, send back React's index.html file.
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(path.join(clientBuildPath, "index.html"));
+    });
+  }
 }
 
 // ─── 404 Handler ──────────────────────────────────────────
