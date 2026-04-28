@@ -13,9 +13,13 @@ const api = axios.create({
 // Helper to get local date in YYYY-MM-DD format
 export const getLocalDateKey = (date = new Date()) => {
   const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  // Force Asia/Kolkata (IST)
+  const istStr = d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  const istDate = new Date(istStr);
+  
+  const year = istDate.getFullYear();
+  const month = String(istDate.getMonth() + 1).padStart(2, "0");
+  const day = String(istDate.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
