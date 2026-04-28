@@ -20,7 +20,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="bottom-nav relative z-50 backdrop-blur-lg flex-shrink-0"
+      className="bottom-nav relative z-50 flex-shrink-0"
       style={{
         background: "rgba(255,255,255,0.92)",
         borderTop: "1px solid var(--border-default)",

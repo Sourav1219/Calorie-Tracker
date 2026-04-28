@@ -81,9 +81,9 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-card rounded-t-2xl sm:rounded-2xl max-h-[80vh] overflow-hidden animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-card rounded-t-[24px] sm:rounded-[24px] max-h-[85dvh] sm:max-h-[80vh] overflow-hidden animate-slide-up shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="font-bold text-text capitalize">Add to {mealType || "meal"}</h3>

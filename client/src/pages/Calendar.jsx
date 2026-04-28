@@ -211,11 +211,12 @@ export default function Calendar() {
       {/* Full viewport centered overlay popup */}
       {isPanelOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 box-border bg-black/40 animate-overlay-fade"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 box-border bg-black/50 animate-overlay-fade"
+          style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
           onClick={() => setSelectedDateKey(null)}
         >
           <div 
-            className="bg-white rounded-[20px] w-full max-w-[420px] max-h-[75vh] flex flex-col overflow-hidden animate-popup-scale shadow-xl"
+            className="bg-white rounded-[24px] w-full max-w-[420px] max-h-[80dvh] flex flex-col overflow-hidden animate-popup-scale shadow-2xl"
             onClick={(e) => e.stopPropagation()} // Prevent clicking modal from closing it
           >
             {/* Header - Fixed at top */}

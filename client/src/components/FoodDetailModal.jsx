@@ -97,8 +97,8 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center px-4 pb-24 pt-6"
-      style={{ background: "var(--bg-modal-overlay)" }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.5)" }}
     >
       <div
         className="absolute inset-0"

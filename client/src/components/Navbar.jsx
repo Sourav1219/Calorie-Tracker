@@ -101,7 +101,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="relative z-50 backdrop-blur-lg flex-shrink-0"
+      className="relative z-50 flex-shrink-0"
       style={{
         background: "rgba(249, 250, 251, 0.8)",
         borderBottom: "1px solid var(--border-default)",
