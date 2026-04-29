@@ -163,10 +163,10 @@ export default function MealSectionSheet({ isOpen, onClose }) {
             </div>
             <button 
               onClick={onClose} 
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
             >
-              <X className="w-5 h-5" />
+              <X className="w-[18px] h-[18px]" />
             </button>
           </div>
 

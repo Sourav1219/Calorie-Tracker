@@ -2,6 +2,7 @@
  * Animated Meal Icons — renders a custom animated SVG based on the meal section name.
  * Falls back to the stored emoji if no matching animation exists.
  */
+import { memo } from "react";
 
 const BreakfastIcon = () => (
   <svg viewBox="0 0 40 40" fill="none" className="meal-icon meal-icon-breakfast" width="28" height="28">
@@ -92,7 +93,7 @@ const ICON_MAP = {
   dinner: DinnerIcon,
 };
 
-export default function MealIcon({ name, fallbackEmoji }) {
+const MealIcon = memo(function MealIcon({ name, fallbackEmoji }) {
   const key = (name || "").toLowerCase().trim();
   const IconComponent = ICON_MAP[key];
 
@@ -102,4 +103,6 @@ export default function MealIcon({ name, fallbackEmoji }) {
 
   // Fallback to emoji for custom sections
   return <span className="text-xl">{fallbackEmoji || "🍽️"}</span>;
-}
+});
+
+export default MealIcon;

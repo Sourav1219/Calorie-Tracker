@@ -1,6 +1,23 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
+// ── In-memory token cache ──────────────────────────────────
+// Avoids hitting localStorage/sessionStorage on every API request.
+// iPhone WebKit storage access is noticeably slower than desktop.
+let _cachedToken = localStorage.getItem("token") || sessionStorage.getItem("token") || null;
+
+export function setCachedToken(token) {
+  _cachedToken = token;
+}
+
+export function getCachedToken() {
+  return _cachedToken;
+}
+
+export function clearCachedToken() {
+  _cachedToken = null;
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL 
     ? `${import.meta.env.VITE_API_URL}/api` 
@@ -26,7 +43,8 @@ export const getLocalDateKey = (date = new Date()) => {
 // Request interceptor — attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    // Use in-memory cache instead of reading storage on every request
+    const token = _cachedToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -44,7 +62,8 @@ api.interceptors.response.use(
     }
 
     if (error.response && error.response.status === 401) {
-      // Clear stored credentials from both storages
+      // Clear stored credentials from both storages + in-memory cache
+      _cachedToken = null;
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       sessionStorage.removeItem("token");

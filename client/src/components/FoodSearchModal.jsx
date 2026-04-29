@@ -87,8 +87,12 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="font-bold text-text capitalize">Add to {mealType || "meal"}</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-background flex items-center justify-center text-muted hover:text-text transition-colors">
-            <X className="w-4 h-4" />
+          <button
+            onClick={onClose}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+            style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+          >
+            <X className="w-[18px] h-[18px]" />
           </button>
         </div>
         {/* Search */}

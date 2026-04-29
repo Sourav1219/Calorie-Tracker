@@ -111,8 +111,12 @@ export default function AddCustomFoodForm({ onClose, onSuccess }) {
       <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col animate-slide-up" style={{ background: "var(--surface-modal)", boxShadow: "var(--shadow-modal)" }}>
         <div className="flex items-center justify-between p-4 sticky top-0 z-10 rounded-t-2xl" style={{ borderBottom: "1px solid var(--border-default)", background: "var(--surface-modal)" }}>
           <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Add Custom Food</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}>
-            <X className="w-4 h-4" />
+          <button
+            onClick={onClose}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+            style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+          >
+            <X className="w-[18px] h-[18px]" />
           </button>
         </div>
 

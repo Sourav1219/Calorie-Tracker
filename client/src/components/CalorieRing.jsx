@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, memo } from "react";
 import { Flame } from "lucide-react";
 
-export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
+const CalorieRing = memo(function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
   const strokeWidth = 12;
   const radius = size / 2 - strokeWidth;
   const circumference = 2 * Math.PI * radius;
@@ -102,4 +102,6 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
       </div>
     </div>
   );
-}
+});
+
+export default CalorieRing;

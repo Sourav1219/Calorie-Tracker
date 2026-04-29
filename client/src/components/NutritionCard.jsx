@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { BadgeCheck, Plus } from "lucide-react";
 import MacroBar from "./MacroBar";
 
@@ -16,7 +17,7 @@ function highlightMatch(text, query) {
   );
 }
 
-export default function FoodCard({ food, onSelect, searchQuery = "", index = 0 }) {
+const FoodCard = memo(function FoodCard({ food, onSelect, searchQuery = "", index = 0 }) {
   return (
     <div
       onClick={() => onSelect(food)}
@@ -69,4 +70,6 @@ export default function FoodCard({ food, onSelect, searchQuery = "", index = 0 }
       </div>
     </div>
   );
-}
+});
+
+export default FoodCard;

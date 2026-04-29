@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
@@ -10,7 +10,7 @@ import MealIcon from "../components/MealIcon";
 import toast from "react-hot-toast";
 import { RotateCcw, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
-function AnimatedMacroCard({ macro, delayMs = 0 }) {
+const AnimatedMacroCard = memo(function AnimatedMacroCard({ macro, delayMs = 0 }) {
   const [currentValue, setCurrentValue] = useState(0);
   const [barWidth, setBarWidth] = useState(0);
 
@@ -78,7 +78,7 @@ function AnimatedMacroCard({ macro, delayMs = 0 }) {
       </p>
     </div>
   );
-}
+});
 
 function formatDateKey(date) {
   const year = date.getFullYear();
@@ -104,8 +104,17 @@ export default function Dashboard() {
   const [pullY, setPullY] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
