@@ -143,19 +143,6 @@ body.modal-open .bottom-nav {
   display: none !important;
 }
 
-/* 
- * On desktop, the .app-mobile-shell has transform:translateZ(0) which creates 
- * a containing block that traps `position:fixed` children inside it.
- * When a modal is open, we remove that transform so the modal overlay 
- * can cover the FULL browser viewport (grey dimming effect).
- */
-@media (min-width: 768px) {
-  body.modal-open .app-mobile-shell {
-    transform: none;
-    will-change: auto;
-  }
-}
-
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
@@ -949,62 +936,4 @@ mark.search-highlight {
   border-radius: 3px;
   padding: 0 2px;
   font-weight: inherit;
-}
-
-/* ─── iOS WebKit Performance Optimizations ───────────────── */
-/* Force GPU compositing for scrollable containers — reduces jank on iPhone */
-.app-mobile-content {
-  -webkit-overflow-scrolling: touch;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-/* Contain layout/paint scope for list items — prevents full-page reflows */
-.food-card-cascade,
-.card {
-  contain: layout style;
-}
-
-/* Optimize SVG animations — prevent layout thrashing */
-.animate-wave,
-.floating-drop,
-.water-ripple-1,
-.water-ripple-2 {
-  will-change: transform;
-  transform: translateZ(0);
-}
-
-/* Reduce animation complexity for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* iOS Safari: prevent rubber-band overscroll on inner containers */
-@supports (-webkit-touch-callout: none) {
-  .page-container {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-  
-  /* Smoother momentum scrolling on iOS */
-  .app-mobile-content {
-    scroll-behavior: auto; /* iOS handles smooth scrolling natively */
-  }
-  
-  /* Prevent tap highlight flash */
-  button, a, input, select, textarea {
-    -webkit-tap-highlight-color: transparent;
-  }
-  
-  /* Prevent text size adjustment on orientation change */
-  body {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
 }

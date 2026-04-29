@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback, memo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Trash2, Edit2, UtensilsCrossed } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -47,20 +47,15 @@ export default function MealLog() {
 
   const totalCalories = filteredMeals.reduce((sum, meal) => sum + meal.calories, 0);
 
-  const handleDelete = useCallback(async (mealId) => {
-    // Optimistic: remove from UI immediately
-    const previousMeals = meals;
-    setMeals((current) => current.filter((meal) => meal.id !== mealId));
-    toast.success("Meal removed");
-
+  const handleDelete = async (mealId) => {
     try {
       await mealsAPI.remove(mealId);
+      setMeals((current) => current.filter((meal) => meal.id !== mealId));
+      toast.success("Meal removed");
     } catch (error) {
-      // Rollback on failure
-      setMeals(previousMeals);
       toast.error(error.response?.data?.error || "Failed to delete meal");
     }
-  }, [meals]);
+  };
 
   const activeSectionName = sections.find(s => s._id === activeTab)?.name || "Section";
 

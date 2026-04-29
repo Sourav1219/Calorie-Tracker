@@ -17,7 +17,7 @@ app.use(cors({
     "https://calorie-tracker-eight-dusky.vercel.app",
     "https://www.pureintake.app"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true
 }));
 app.use(express.json({ limit: "50mb" }));

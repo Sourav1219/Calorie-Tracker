@@ -1,6 +1,4 @@
-import { memo } from "react";
-
-const MacroBar = memo(function MacroBar({ proteinG = 0, carbsG = 0, fatG = 0, size = "sm" }) {
+export default function MacroBar({ proteinG = 0, carbsG = 0, fatG = 0, size = "sm" }) {
   const pCal = proteinG * 4;
   const cCal = carbsG * 4;
   const fCal = fatG * 9;
@@ -45,6 +43,4 @@ const MacroBar = memo(function MacroBar({ proteinG = 0, carbsG = 0, fatG = 0, si
       </div>
     </div>
   );
-});
-
-export default MacroBar;
+}

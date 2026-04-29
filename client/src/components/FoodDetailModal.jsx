@@ -84,12 +84,10 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
   const handleAddToMeal = async (sectionId) => {
     try {
       setIsSubmitting(true);
-      // Close modal immediately for instant feedback on iPhone
-      onClose();
       if (onAddToMeal) {
-        // Fire-and-forget — parent handles API call and error display
-        onAddToMeal(food, Number(quantity), unit, sectionId);
+        await onAddToMeal(food, Number(quantity), unit, sectionId);
       }
+      onClose();
     } catch (error) {
       toast.error(error?.message || "Failed to add meal");
     } finally {
@@ -99,8 +97,8 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.6)" }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.5)" }}
     >
       <div
         className="absolute inset-0"
@@ -109,21 +107,20 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
 
       {!showMealSelector ? (
         <div
-          className="relative w-full max-w-md overflow-hidden rounded-t-[24px] sm:rounded-[24px] animate-slide-up flex flex-col"
+          className="relative w-full max-w-md overflow-hidden rounded-[24px] animate-slide-up flex flex-col max-h-full"
           style={{
             background: "var(--surface-modal)",
             borderTop: "1px solid var(--border-default)",
             boxShadow: "var(--shadow-modal)",
-            maxHeight: "calc(85dvh - env(safe-area-inset-top, 0px))",
           }}
         >
           <div className="flex-shrink-0 flex items-start justify-between px-4 py-3 sm:px-5" style={{ borderBottom: "1px solid var(--border-default)" }}>
-            <div className="pr-4 min-w-0 flex-1">
+            <div className="pr-4">
               <div className="mb-1.5 flex items-center gap-2">
-                <h2 className="text-lg font-bold leading-tight truncate" style={{ color: "var(--text-primary)" }}>
+                <h2 className="text-lg font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
                   {food.name}
                 </h2>
-                {food.isVerified && <BadgeCheck className="h-5 w-5 flex-shrink-0" style={{ color: "var(--green-primary)" }} />}
+                {food.isVerified && <BadgeCheck className="h-5 w-5" style={{ color: "var(--green-primary)" }} />}
               </div>
               <span
                 className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"
@@ -134,10 +131,10 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
             >
-              <X className="w-[18px] h-[18px]" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
@@ -262,28 +259,24 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
         </div>
       ) : (
         <div
-          className="relative w-full max-w-md overflow-hidden rounded-t-[24px] sm:rounded-[24px] animate-fade-up flex flex-col"
-          style={{
-            background: "var(--surface-modal)",
-            boxShadow: "var(--shadow-modal)",
-            maxHeight: "calc(85dvh - env(safe-area-inset-top, 0px))",
-          }}
+          className="relative w-full max-w-md overflow-hidden rounded-[24px] animate-fade-up max-h-full flex flex-col"
+          style={{ background: "var(--surface-modal)", boxShadow: "var(--shadow-modal)" }}
         >
           <div className="flex items-start justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border-default)" }}>
-            <div className="pr-4 min-w-0 flex-1">
+            <div className="pr-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
                 Select meal section
               </p>
-              <h3 className="mt-1 text-lg font-bold truncate" style={{ color: "var(--text-primary)" }}>
+              <h3 className="mt-1 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
                 Add {food.name}
               </h3>
             </div>
             <button
               onClick={() => setShowMealSelector(false)}
-              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
             >
-              <X className="w-[18px] h-[18px]" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 

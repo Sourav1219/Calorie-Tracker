@@ -148,16 +148,9 @@ export default function FoodDatabase() {
     const section = sections.find(s => s._id === targetSectionId);
     const sectionName = section ? section.name : "Meal";
     
-    // Optimistic: navigate immediately so the UI feels instant on iPhone
-    navigate(`/log?meal=${targetSectionId}`);
+    await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
     toast.success(`${food.name} added to ${sectionName}`);
-
-    try {
-      await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-    } catch (error) {
-      toast.error("Failed to save — please try again");
-      console.error("Meal add error:", error);
-    }
+    navigate(`/log?meal=${targetSectionId}`);
   };
 
   return (

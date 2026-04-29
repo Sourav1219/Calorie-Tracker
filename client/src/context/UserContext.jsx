@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import api, { setCachedToken, clearCachedToken } from "../utils/api";
+import api from "../utils/api";
 
 const UserContext = createContext(null);
 
@@ -38,7 +38,6 @@ export function UserProvider({ children }) {
 
         if (savedToken && savedUser) {
           setToken(savedToken);
-          setCachedToken(savedToken); // sync in-memory cache
           setUser(JSON.parse(savedUser));
 
           // Verify token is still valid
@@ -56,7 +55,6 @@ export function UserProvider({ children }) {
             // Token expired or invalid — clear session
             removeStored(TOKEN_KEY);
             removeStored(USER_KEY);
-            clearCachedToken();
             setUser(null);
             setToken(null);
           }
@@ -90,7 +88,6 @@ export function UserProvider({ children }) {
 
     storage.setItem(TOKEN_KEY, jwtToken);
     storage.setItem(USER_KEY, JSON.stringify(userData));
-    setCachedToken(jwtToken); // sync in-memory cache
   };
 
   const logout = () => {
@@ -98,7 +95,6 @@ export function UserProvider({ children }) {
     setToken(null);
     removeStored(TOKEN_KEY);
     removeStored(USER_KEY);
-    clearCachedToken(); // clear in-memory cache
 
     // Redirect to login page
     if (window.location.pathname !== "/login") {

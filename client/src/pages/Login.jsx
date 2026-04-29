@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import toast from "react-hot-toast";
 import api from "../utils/api";
 import { useUser } from "../context/UserContext";
 
