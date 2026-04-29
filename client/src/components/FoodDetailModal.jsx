@@ -96,24 +96,14 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.5)" }}
-    >
+    <div className="modal-overlay">
       <div
         className="absolute inset-0"
         onClick={showMealSelector ? () => setShowMealSelector(false) : onClose}
       />
 
       {!showMealSelector ? (
-        <div
-          className="relative w-full max-w-md overflow-hidden rounded-[24px] animate-slide-up flex flex-col max-h-full"
-          style={{
-            background: "var(--surface-modal)",
-            borderTop: "1px solid var(--border-default)",
-            boxShadow: "var(--shadow-modal)",
-          }}
-        >
+        <div className="modal-card animate-slide-up">
           <div className="flex-shrink-0 flex items-start justify-between px-4 py-3 sm:px-5" style={{ borderBottom: "1px solid var(--border-default)" }}>
             <div className="pr-4">
               <div className="mb-1.5 flex items-center gap-2">
@@ -258,10 +248,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
           </div>
         </div>
       ) : (
-        <div
-          className="relative w-full max-w-md overflow-hidden rounded-[24px] animate-fade-up max-h-full flex flex-col"
-          style={{ background: "var(--surface-modal)", boxShadow: "var(--shadow-modal)" }}
-        >
+        <div className="modal-card animate-fade-up">
           <div className="flex items-start justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border-default)" }}>
             <div className="pr-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>

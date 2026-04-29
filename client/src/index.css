@@ -139,6 +139,31 @@ body.modal-open {
   overflow: hidden;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 100;
+}
+
+.modal-card {
+  width: 90%;
+  max-width: 420px;
+  height: 65vh;
+  height: 65dvh; /* better on iPhone */
+  max-height: 600px;
+  background: var(--surface-modal);
+  border-radius: 24px;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+}
+
 body.modal-open .bottom-nav {
   display: none !important;
 }
