@@ -226,7 +226,8 @@ export default function Calendar() {
               </h3>
               <button 
                 onClick={() => setSelectedDateKey(null)}
-                className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0"
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+                style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
               >
                 <X className="w-5 h-5" />
               </button>

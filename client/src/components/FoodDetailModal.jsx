@@ -121,7 +121,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             </div>
             <button
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
             >
               <X className="h-5 w-5" />
@@ -260,7 +260,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             </div>
             <button
               onClick={() => setShowMealSelector(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
             >
               <X className="h-5 w-5" />
