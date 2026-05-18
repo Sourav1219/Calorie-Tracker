@@ -68,6 +68,107 @@ ADMIN_EMAILS="*" # comma-separated admin emails; use * for local development
 - API: `POST /api/food/bulk`
 - Input: JSON array or CSV parsed by the admin panel
 
+## Quality & Safety Tooling
+
+### Type safety (TypeScript checks on JS)
+
+```bash
+cd client && npm run typecheck
+cd server && npm run typecheck
+```
+
+### Unit tests
+
+```bash
+cd client && npm run test:unit
+cd server && npm run test:unit
+```
+
+### E2E tests
+
+```bash
+cd client
+npx playwright install chromium   # first time only
+npm run test:e2e
+```
+
+### Runtime hardening
+
+- Request logging + process-level error monitoring (server)
+- API rate limiting (`/api` global + stricter auth limiter)
+- Response caching for public food catalog endpoints:
+  - `GET /api/food/search`
+  - `GET /api/food/categories`
+- Frontend global error capture + improved ErrorBoundary fallback
+- Vite bundle optimization with manual chunk splitting
+
+## API Endpoints
+
+### Auth
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | No | Register a new user |
+| POST | `/api/auth/login` | No | Login and get JWT |
+| GET | `/api/auth/me` | Yes | Get current user profile |
+| PATCH | `/api/auth/me` | Yes | Update current user profile |
+| PUT | `/api/auth/profile` | Yes | Update current user profile |
+
+### Food
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/food/search?q=&category=` | No | Search food catalog |
+| GET | `/api/food/categories` | No | List normalized food categories |
+| GET | `/api/food/:id` | No | Get food details |
+| POST | `/api/food` | Yes | Create custom food item |
+| POST | `/api/food/bulk/analyze` | Admin | Validate bulk payload |
+| POST | `/api/food/bulk` | Admin | Bulk upload food items |
+| GET | `/api/food/bulk/history` | Admin | Bulk upload history |
+
+### Meals
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/meals/today?date=YYYY-MM-DD` | Yes | Get today's meals |
+| POST | `/api/meals` | Yes | Add meal entry |
+| DELETE | `/api/meals/:id` | Yes | Delete meal entry |
+
+### Water
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/water/today?date=YYYY-MM-DD` | Yes | Get today's water entries |
+| POST | `/api/water` | Yes | Add water entry |
+| DELETE | `/api/water/:id` | Yes | Delete water entry |
+
+### Logs
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/logs/today?date=YYYY-MM-DD` | Yes | Get daily log summary |
+| DELETE | `/api/logs/today?date=YYYY-MM-DD` | Yes | Reset daily log |
+| GET | `/api/logs/month?month=&year=` | Yes | Get monthly logs |
+| GET | `/api/logs/:date` | Yes | Get log by date |
+
+### Meal Sections
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/meal-sections` | Yes | List user meal sections |
+| POST | `/api/meal-sections` | Yes | Create meal section |
+| PATCH | `/api/meal-sections/reorder` | Yes | Reorder meal sections |
+| PATCH | `/api/meal-sections/:id` | Yes | Update meal section |
+| DELETE | `/api/meal-sections/:id` | Yes | Delete meal section |
+
+### Notifications
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/notifications/smart` | Yes | Get smart notifications |
+| POST | `/api/notifications/update-activity` | Yes | Update activity status |
+| POST | `/api/notifications/mark-shown` | Yes | Mark notification as shown |
+
 ## Features (Planned)
 
 - 📊 Dashboard with calorie ring & macro breakdown

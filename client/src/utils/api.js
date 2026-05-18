@@ -39,7 +39,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (!error.response && error.request) {
+    // Check if this is a notification API call (don't show toast for these)
+    const isNotificationAPI = error.config?.url?.includes('/notifications');
+    
+    if (!error.response && error.request && !isNotificationAPI) {
       toast.error("Check your internet connection");
     }
 
@@ -56,8 +59,8 @@ api.interceptors.response.use(
       }
     }
     
-    // Default API error toast messages
-    if (error.response && error.response.status !== 401) {
+    // Default API error toast messages (skip for notification API)
+    if (error.response && error.response.status !== 401 && !isNotificationAPI) {
        const message = error.response.data?.error || "Operation failed";
        if (error.response.status >= 500) {
          toast.error(message);
@@ -133,6 +136,12 @@ export const mealSectionsAPI = {
   update: (id, data) => api.patch(`/meal-sections/${id}`, data),
   remove: (id) => api.delete(`/meal-sections/${id}`),
   reorder: (orderIds) => api.patch("/meal-sections/reorder", { orderIds }),
+};
+
+export const notificationsAPI = {
+  getSmartNotifications: () => api.get("/notifications/smart"),
+  updateActivity: () => api.post("/notifications/update-activity"),
+  markShown: (type) => api.post("/notifications/mark-shown", { type }),
 };
 
 export default api;

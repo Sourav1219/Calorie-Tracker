@@ -2,13 +2,19 @@ process.env.TZ = "Asia/Kolkata";
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const morgan = require("morgan");
 const { connectToDatabase } = require("./config/database");
+const logger = require("./utils/logger");
+const requestContext = require("./middleware/requestContext");
+const { registerProcessMonitoring, normalizeError } = require("./utils/monitoring");
+const { apiLimiter } = require("./middleware/rateLimiters");
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+registerProcessMonitoring(logger);
 
 // ✅ CORS here
 app.use(cors({
@@ -20,8 +26,19 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true
 }));
+app.use(requestContext);
+app.use(
+  morgan(":method :url :status :response-time ms", {
+    stream: {
+      write: (line) => {
+        logger.info("HTTP request", { request: line.trimEnd() });
+      },
+    },
+  })
+);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use("/api", apiLimiter);
 
 // ─── Health Check ─────────────────────────────────────────
 app.get("/", (req, res) => {
@@ -39,6 +56,7 @@ const mealRoutes = require("./routes/meals");
 const waterRoutes = require("./routes/water");
 const logRoutes = require("./routes/logs");
 const mealSectionRoutes = require("./routes/mealSections");
+const notificationRoutes = require("./routes/notifications");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/food", foodRoutes);
@@ -46,6 +64,7 @@ app.use("/api/meals", mealRoutes);
 app.use("/api/water", waterRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/meal-sections", mealSectionRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ─── Serve Frontend (if deployed together) ──────────────────
 const path = require("path");
@@ -75,11 +94,16 @@ app.use((req, res) => {
 
 // ─── Global Error Handler ─────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error("❌ Error:", err.message);
-  console.error(err.stack);
+  logger.error("Unhandled API error", {
+    requestId: req.id,
+    path: req.originalUrl,
+    method: req.method,
+    error: normalizeError(err),
+  });
 
   res.status(err.status || 500).json({
     error: err.message || "Internal Server Error",
+    requestId: req.id,
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
@@ -90,12 +114,15 @@ async function startServer() {
     await connectToDatabase();
 
     app.listen(PORT, () => {
-      console.log(`\n🚀 Server running on port ${PORT}`);
-      console.log(`📡 API Base: http://localhost:${PORT}/api`);
-      console.log(`✅ MongoDB connected successfully\n`);
+      logger.info("Server started", {
+        port: PORT,
+        apiBase: `http://localhost:${PORT}/api`,
+      });
     });
   } catch (error) {
-    console.error("❌ Failed to connect to MongoDB:", error.message);
+    logger.error("Failed to connect to MongoDB", {
+      error: normalizeError(error),
+    });
     process.exit(1);
   }
 }

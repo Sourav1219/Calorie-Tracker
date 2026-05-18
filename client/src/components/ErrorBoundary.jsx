@@ -1,4 +1,5 @@
 import React from "react";
+import { reportClientError } from "../utils/monitoring";
 
 /**
  * Global Error Boundary — catches any unhandled React render error
@@ -15,7 +16,10 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    reportClientError(error, {
+      type: "react.error-boundary",
+      componentStack: errorInfo?.componentStack || null,
+    });
   }
 
   handleReload = () => {
@@ -111,6 +115,16 @@ export default class ErrorBoundary extends React.Component {
               Go Home
             </button>
           </div>
+          <p
+            style={{
+              marginTop: "14px",
+              fontSize: "12px",
+              color: "#9ca3af",
+              textAlign: "center",
+            }}
+          >
+            If this keeps happening, please share a screenshot with support.
+          </p>
         </div>
       );
     }

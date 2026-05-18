@@ -99,7 +99,7 @@ export default function MealLog() {
           <button
             key={section._id}
             onClick={() => setActiveTab(section._id)}
-            className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-sm font-medium transition-all duration-200 w-[110px] flex-shrink-0"
+            className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-sm font-medium transition-all duration-200 w-[110px] flex-shrink-0 no-spring"
             style={{
               background: activeTab === section._id ? "var(--green-primary)" : "var(--surface-1)",
               color: activeTab === section._id ? "var(--text-on-green)" : "var(--text-muted)",
@@ -117,7 +117,7 @@ export default function MealLog() {
         {/* Edit Button */}
         <button 
           onClick={() => setIsSheetOpen(true)}
-          className="flex items-center justify-center min-w-[36px] min-h-[36px] rounded-xl border border-dashed transition-colors hover:bg-gray-50 flex-shrink-0 ml-1"
+          className="flex items-center justify-center min-w-[36px] min-h-[36px] rounded-xl border border-dashed transition-colors hover:bg-gray-50 flex-shrink-0 ml-1 no-spring"
           style={{ borderColor: "var(--border-default)", color: "var(--text-muted)" }}
         >
           <Edit2 className="w-4 h-4" />

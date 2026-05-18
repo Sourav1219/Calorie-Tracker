@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const { publicFoodCache } = require("../middleware/cache");
 const {
   searchFood,
   getFoodById,
@@ -18,10 +19,10 @@ router.get("/test", (req, res) => {
 });
 
 // GET /api/food/search?q=...&category=...
-router.get("/search", searchFood);
+router.get("/search", publicFoodCache, searchFood);
 
 // GET /api/food/categories
-router.get("/categories", getCategories);
+router.get("/categories", publicFoodCache, getCategories);
 
 // POST /api/food/bulk/analyze  (admin only)
 router.post("/bulk/analyze", authMiddleware, adminMiddleware, analyzeBulkFoods);

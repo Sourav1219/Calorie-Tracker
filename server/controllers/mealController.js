@@ -1,6 +1,7 @@
 const DailyLog = require("../models/DailyLog");
 const FoodItem = require("../models/FoodItem");
 const MealEntry = require("../models/MealEntry");
+const UserActivity = require("../models/UserActivity");
 const {
 	buildMeasurementOptions,
 	chooseDefaultMeasurementUnit,
@@ -17,10 +18,31 @@ function resolveMeasurementOptions(foodItem) {
 		name: foodItem.name,
 		category: foodItem.category,
 	});
-	if (generated.length > 0) {
+
+	const stored = Array.isArray(foodItem.measurementOptions)
+		? foodItem.measurementOptions
+		: [];
+
+	if (stored.length === 0) {
 		return generated;
 	}
-	return Array.isArray(foodItem.measurementOptions) ? foodItem.measurementOptions : [];
+
+	const merged = [...stored];
+	const knownUnits = new Set(
+		stored.map((option) => String(option?.unit || "").trim().toLowerCase())
+	);
+
+	for (const option of generated) {
+		const normalizedUnit = String(option?.unit || "").trim().toLowerCase();
+		if (!normalizedUnit || knownUnits.has(normalizedUnit)) {
+			continue;
+		}
+
+		merged.push(option);
+		knownUnits.add(normalizedUnit);
+	}
+
+	return merged;
 }
 
 function toMealResponse(entry, foodItem = null) {
@@ -65,7 +87,7 @@ function getMeasurementFactor(foodItem, unit) {
 		return 150;
 	}
 
-	return 1;
+	return null;
 }
 
 function resolveDefaultUnit(foodItem) {
@@ -79,7 +101,11 @@ function resolveDefaultUnit(foodItem) {
 }
 
 function normalizeQuantityForCalculation(foodItem, quantity, unit) {
-	return quantity * getMeasurementFactor(foodItem, unit);
+	const measurementFactor = getMeasurementFactor(foodItem, unit);
+	if (!measurementFactor) {
+		return null;
+	}
+	return quantity * measurementFactor;
 }
 
 async function getTodayMeals(req, res) {
@@ -141,11 +167,22 @@ async function createMeal(req, res) {
 		}
 
 		const dailyLog = await ensureDailyLog(userId, date || formatDateKey());
+		const resolvedUnit =
+			unit || resolveDefaultUnit(foodItem) || foodItem.servingUnit || "g";
 		const normalizedQuantityForCalculation = normalizeQuantityForCalculation(
 			foodItem,
 			normalizedQuantity,
-			unit || resolveDefaultUnit(foodItem) || foodItem.servingUnit || "g"
+			resolvedUnit
 		);
+		if (!normalizedQuantityForCalculation) {
+			const supportedUnits = resolveMeasurementOptions(foodItem)
+				.map((option) => option.unit)
+				.filter(Boolean);
+			return res.status(400).json({
+				error: `Unsupported unit '${resolvedUnit}' for this food item`,
+				supportedUnits,
+			});
+		}
 		const multiplier = normalizedQuantityForCalculation / foodItem.servingSize;
 
 		const mealEntry = await MealEntry.create({
@@ -153,7 +190,7 @@ async function createMeal(req, res) {
 			mealType: String(mealType).trim().toLowerCase(),
 			foodItemId: foodItem._id,
 			quantity: normalizedQuantity,
-			unit: unit || foodItem.servingUnit || "g",
+			unit: resolvedUnit,
 			calories: Number((foodItem.caloriesPer * multiplier).toFixed(2)),
 			proteinG: Number((foodItem.proteinG * multiplier).toFixed(2)),
 			carbsG: Number((foodItem.carbsG * multiplier).toFixed(2)),
@@ -166,6 +203,11 @@ async function createMeal(req, res) {
 			carbsG: mealEntry.carbsG,
 			fatG: mealEntry.fatG,
 		});
+
+		// Update user activity in background (don't wait)
+		updateUserActivityAsync(userId).catch(err => 
+			console.error("Failed to update user activity:", err)
+		);
 
 		return res.status(201).json({
 			message: "Meal added successfully",
@@ -205,6 +247,24 @@ async function deleteMeal(req, res) {
 		console.error("Delete meal error:", error);
 		return res.status(500).json({ error: "Something went wrong" });
 	}
+}
+
+// Helper function to update user activity asynchronously
+async function updateUserActivityAsync(userId) {
+	const today = formatDateKey();
+	
+	let activity = await UserActivity.findOne({ userId });
+	if (!activity) {
+		activity = new UserActivity({ userId });
+	}
+
+	// Update last logged date
+	if (activity.lastLoggedDate !== today) {
+		activity.totalDaysLogged += 1;
+		activity.lastLoggedDate = today;
+	}
+
+	await activity.save();
 }
 
 module.exports = {

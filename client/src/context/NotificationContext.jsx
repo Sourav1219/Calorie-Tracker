@@ -1,145 +1,123 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useUser } from "./UserContext";
-import { logsAPI } from "../utils/api";
+import { notificationsAPI } from "../utils/api";
 
 const NotificationContext = createContext();
 
-const generateSmartNotifications = (user, dailyLog) => {
-  if (!user) return [];
-
-  const now = new Date();
-  
-  // Get hours in IST (UTC+5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + istOffset);
-  const hour = istTime.getHours();
-
-  const generated = [];
-  const log = dailyLog || { totalCalories: 0, totalWaterMl: 0 };
-  const goalCal = user?.dailyCalorieGoal || 2000;
-  const goalWater = user?.dailyWaterGoalMl || 3000;
-
-  // Goal Reached
-  if (log.totalCalories > 0 && log.totalCalories >= goalCal) {
-    generated.push({
-      id: "goal_reached", type: "goal", title: "Daily goal reached!",
-      message: `You hit your ${goalCal} kcal goal today. Great work!`,
-      time: new Date(Date.now() - 5 * 60000).toISOString(), read: false
-    });
-  }
-
-  // Meal Reminders based on log
-  if (hour >= 8 && hour < 11) {
-    if (log.totalCalories === 0) {
-      generated.push({
-        id: "meal_breakfast", type: "meal", title: "Breakfast reminder", 
-        message: "Start your day right! Log your breakfast.", 
-        time: new Date(Date.now() - 5 * 60000).toISOString(), read: false
-      });
-    }
-  } else if (hour >= 13 && hour < 16) {
-    if (log.totalCalories < goalCal * 0.25) {
-      generated.push({
-        id: "meal_lunch", type: "meal", title: "Lunch reminder", 
-        message: "It's lunchtime! Don't forget to log your meal.", 
-        time: new Date(Date.now() - 5 * 60000).toISOString(), read: false
-      });
-    }
-  } else if (hour >= 19 && hour < 22) {
-    if (log.totalCalories < goalCal * 0.6) {
-      generated.push({
-        id: "meal_dinner", type: "meal", title: "Dinner reminder", 
-        message: "Time for dinner! Keep track of your calories.", 
-        time: new Date(Date.now() - 5 * 60000).toISOString(), read: false
-      });
-    }
-  }
-
-  // Water Reminder (6 AM - 6 PM IST)
-  if (hour >= 6 && hour < 18) {
-    if (log.totalWaterMl < goalWater) {
-      const remainingL = Math.round((goalWater - log.totalWaterMl) / 100) / 10;
-      generated.push({
-        id: "water_rem", type: "water", title: "Stay hydrated!",
-        message: `You're ${remainingL}L away from your daily water goal.`,
-        time: new Date(Date.now() - 60 * 60000).toISOString(), read: false
-      });
-    }
-  }
-
-  // Generic Streak
-  generated.push({
-    id: "streak_7", type: "streak", title: "7 day streak! 🔥",
-    message: "You've logged meals for 7 days in a row. Keep it up!",
-    time: new Date(Date.now() - 3 * 60 * 60000).toISOString(), read: true
-  });
-
-  return generated;
-};
-
 export function NotificationProvider({ children }) {
-  const { user } = useUser();
+  const { user, isLoading: userLoading } = useUser();
   const [notifications, setNotifications] = useState([]);
   const [hasNew, setHasNew] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load from localStorage or API
-  useEffect(() => {
-    if (!user) return;
+  // Fetch smart notifications from backend
+  const fetchNotifications = useCallback(async () => {
+    // Don't fetch if user is not loaded or not logged in
+    if (!user || userLoading) {
+      setNotifications([]);
+      return;
+    }
 
-    const initializeNotifications = async () => {
-      let logData = null;
-      try {
-        const res = await logsAPI.getToday();
-        logData = res.data?.log || null;
-      } catch (err) {
-        console.error("Could not fetch log for notifications", err);
-      }
-
+    try {
+      setIsLoading(true);
+      const res = await notificationsAPI.getSmartNotifications();
+      const serverNotifications = res.data.notifications || [];
+      
+      // Merge with localStorage to preserve read status
       const stored = localStorage.getItem(`notifications_${user.id}`);
+      let readIds = new Set();
+      
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          let valid = parsed.filter(n => new Date(n.time).getTime() > sevenDaysAgo);
-          
-          // Merge dynamic notifications if they don't already exist
-          const smartNotifs = generateSmartNotifications(user, logData);
-          const newNotifs = smartNotifs.filter(sn => !valid.find(v => v.id === sn.id));
-          
-          if (newNotifs.length > 0) {
-            valid = [...newNotifs, ...valid];
-          }
-          setNotifications(valid);
+          readIds = new Set(parsed.filter(n => n.read).map(n => n.id));
         } catch (e) {
-          setNotifications(generateSmartNotifications(user, logData));
+          console.error("Failed to parse stored notifications:", e);
         }
-      } else {
-        setNotifications(generateSmartNotifications(user, logData));
       }
-    };
 
-    initializeNotifications();
-  }, [user]);
+      // Mark notifications as read if they were read before
+      const mergedNotifications = serverNotifications.map(notif => ({
+        ...notif,
+        read: readIds.has(notif.id) ? true : notif.read
+      }));
 
-  // Save to localStorage
+      setNotifications(mergedNotifications);
+      
+      // Save to localStorage
+      localStorage.setItem(`notifications_${user.id}`, JSON.stringify(mergedNotifications));
+    } catch (error) {
+      // Silently fail - don't show error to user
+      console.error("Failed to fetch notifications:", error);
+      // Fallback to empty array on error
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, userLoading]);
+
+  // Initial load
   useEffect(() => {
-    if (!user || notifications.length === 0) return;
-    const toSave = notifications.slice(0, 50);
-    localStorage.setItem(`notifications_${user.id}`, JSON.stringify(toSave));
-  }, [notifications, user]);
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refresh notifications every 5 minutes
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [user, fetchNotifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      if (user) {
+        localStorage.setItem(`notifications_${user.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    // Mark notification as shown on backend
+    const notification = notifications.find(n => n.id === id);
+    if (notification) {
+      notificationsAPI.markShown(notification.type).catch(err => 
+        console.error("Failed to mark notification as shown:", err)
+      );
+    }
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      if (user) {
+        localStorage.setItem(`notifications_${user.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    // Mark all notification types as shown
+    const types = [...new Set(notifications.map(n => n.type))];
+    types.forEach(type => {
+      notificationsAPI.markShown(type).catch(err => 
+        console.error("Failed to mark notification as shown:", err)
+      );
+    });
   };
 
   const removeNotification = (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications(prev => {
+      const updated = prev.filter(n => n.id !== id);
+      if (user) {
+        localStorage.setItem(`notifications_${user.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const addNotification = useCallback((notif) => {
@@ -149,10 +127,21 @@ export function NotificationProvider({ children }) {
       read: false,
       ...notif
     };
-    setNotifications(prev => [newNotif, ...prev]);
+    setNotifications(prev => {
+      const updated = [newNotif, ...prev];
+      if (user) {
+        localStorage.setItem(`notifications_${user.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
     setHasNew(true);
     setTimeout(() => setHasNew(false), 1000);
-  }, []);
+  }, [user]);
+
+  // Refresh notifications (can be called manually)
+  const refreshNotifications = useCallback(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   return (
     <NotificationContext.Provider value={{ 
@@ -162,6 +151,8 @@ export function NotificationProvider({ children }) {
       markAllAsRead, 
       removeNotification,
       addNotification,
+      refreshNotifications,
+      isLoading,
       hasNew
     }}>
       {children}

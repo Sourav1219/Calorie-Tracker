@@ -1,5 +1,6 @@
 const DailyLog = require("../models/DailyLog");
 const WaterEntry = require("../models/WaterEntry");
+const UserActivity = require("../models/UserActivity");
 const {
 	formatDateKey,
 	ensureDailyLog,
@@ -60,6 +61,11 @@ async function createWaterEntry(req, res) {
 			waterMl: normalizedAmount,
 		});
 
+		// Update user activity in background (don't wait)
+		updateUserActivityAsync(userId).catch(err => 
+			console.error("Failed to update user activity:", err)
+		);
+
 		return res.status(201).json({
 			message: "Water logged successfully",
 			entry: toWaterResponse(entry),
@@ -93,6 +99,24 @@ async function deleteWaterEntry(req, res) {
 		console.error("Delete water entry error:", error);
 		return res.status(500).json({ error: "Something went wrong" });
 	}
+}
+
+// Helper function to update user activity asynchronously
+async function updateUserActivityAsync(userId) {
+	const today = formatDateKey();
+	
+	let activity = await UserActivity.findOne({ userId });
+	if (!activity) {
+		activity = new UserActivity({ userId });
+	}
+
+	// Update last logged date
+	if (activity.lastLoggedDate !== today) {
+		activity.totalDaysLogged += 1;
+		activity.lastLoggedDate = today;
+	}
+
+	await activity.save();
 }
 
 module.exports = {

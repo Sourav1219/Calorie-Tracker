@@ -125,11 +125,11 @@ export default function Navbar() {
           <div ref={buttonRef}>
             <button
               onClick={togglePanel}
-              className="w-11 h-11 rounded-full flex items-center justify-center transition-colors relative"
+              className="bell-button-group w-11 h-11 rounded-full flex items-center justify-center transition-colors relative no-spring"
               style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}
             >
               <Bell 
-                className={`w-5 h-5 ${(hasNew || isRinging) ? 'animate-bell-shake' : ''}`} 
+                className={`bell-icon w-5 h-5 ${(hasNew || isRinging) ? 'animate-bell-shake' : ''}`} 
                 style={{ color: unreadCount > 0 ? "var(--green-primary)" : "var(--text-muted)" }}
               />
               {unreadCount > 0 && (
@@ -144,7 +144,7 @@ export default function Navbar() {
           <button
             id="navbar-avatar"
             onClick={() => navigate("/profile")}
-            className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 active:scale-95 overflow-hidden"
+            className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 hover:scale-[1.05] hover:shadow-md hover:ring-2 hover:ring-green-500/20 active:scale-95 overflow-hidden no-spring"
             style={{ background: "var(--green-primary)", color: "var(--text-on-green)" }}
           >
             {user?.photoUrl ? (

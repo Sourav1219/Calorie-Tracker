@@ -267,7 +267,7 @@ export default function Profile() {
                 {!user?.photoUrl ? (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-lg border border-gray-100 transition-all duration-200 hover:scale-110 active:scale-95 z-10"
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-lg border border-gray-100 transition-all duration-200 hover:scale-110 active:scale-95 z-10 no-spring"
                     style={{ color: "var(--green-primary)" }}
                     title="Upload Photo"
                   >
@@ -276,7 +276,7 @@ export default function Profile() {
                 ) : (
                   <button
                     onClick={() => setShowRemoveToast(true)}
-                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-lg border border-gray-100 transition-all duration-200 hover:scale-110 active:scale-95 z-10"
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-lg border border-gray-100 transition-all duration-200 hover:scale-110 active:scale-95 z-10 no-spring"
                     style={{ color: "#ef4444" }}
                     title="Remove Photo"
                   >
@@ -298,7 +298,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setMode("edit")}
-                  className="mt-3 px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97]"
+                  className="mt-3 px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97] no-spring"
                   style={{
                     background: "var(--green-primary)",
                     color: "var(--text-on-green)",
@@ -366,7 +366,7 @@ export default function Profile() {
           {user?.isAdmin && (
             <button
               onClick={() => navigate("/admin/bulk-upload")}
-              className="w-full mb-4 flex items-center justify-center gap-2 h-[48px] rounded-xl font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+              className="w-full mb-4 flex items-center justify-center gap-2 h-[48px] rounded-xl font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] no-spring"
               style={{ background: "var(--green-subtle)", color: "var(--green-text)", border: "1px solid var(--green-border)" }}
             >
               <ShieldCheck className="w-5 h-5" />
@@ -376,7 +376,7 @@ export default function Profile() {
 
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 h-[48px] rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 h-[48px] rounded-xl font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] no-spring"
             style={{
               background: "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(239,68,68,0.02) 100%)",
               color: "#ef4444",
@@ -395,7 +395,7 @@ export default function Profile() {
           <button
             type="button"
             onClick={() => setMode("view")}
-            className="inline-flex items-center gap-1 text-sm font-bold mb-6 transition-transform hover:-translate-x-1 mt-2"
+            className="inline-flex items-center gap-1 text-sm font-bold mb-6 transition-transform hover:-translate-x-1 mt-2 no-spring"
             style={{ color: "var(--text-muted)" }}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -625,7 +625,7 @@ export default function Profile() {
             type="button"
             onClick={handleSave}
             disabled={!hasChanges || isSaving}
-            className="w-full h-[54px] rounded-[16px] transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-[54px] rounded-[16px] transition-all duration-200 active:scale-[0.98] no-spring"
             style={{
               background: "var(--green-primary)",
               color: "var(--text-on-green)",

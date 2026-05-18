@@ -7,7 +7,10 @@ import { UserProvider } from "./context/UserContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { MealSectionProvider } from "./context/MealSectionContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { registerGlobalErrorHandlers } from "./utils/monitoring";
 import "./index.css";
+
+registerGlobalErrorHandlers();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -41,4 +44,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </ErrorBoundary>
   </React.StrictMode>
 );
-

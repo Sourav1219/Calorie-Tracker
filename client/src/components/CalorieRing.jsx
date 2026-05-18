@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Flame } from "lucide-react";
 
 export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
   const strokeWidth = 12;
@@ -88,15 +87,23 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
           of {goal} kcal
         </p>
         
-        <div className="flex items-center gap-0.5 justify-center mt-1 animate-fade-in">
+        <div className="flex items-center gap-1 justify-center mt-1 animate-fade-in">
           {pct >= 0.8 && (
-            <Flame 
-              size={14} 
-              className={pct >= 1 ? "text-red-500 animate-pulse" : "text-orange-500"} 
-            />
+            <span 
+              className={`text-[14px] leading-none ${pct >= 1 ? "animate-pulse drop-shadow-[0_0_8px_rgba(255,140,0,0.8)]" : "opacity-70"}`}
+            >
+              🔥
+            </span>
           )}
-          <p className="text-[11px] font-semibold" style={{ color: progressColor, transition: "color 1s ease" }}>
-            {remaining <= 0 ? "GOAL MET 🎉" : `${remaining} LEFT`}
+          <p 
+            className="text-[12px] font-bold tracking-wide" 
+            style={{ color: progressColor, transition: "color 1s ease" }}
+          >
+            {remaining <= 0 ? (
+              "GOAL MET"
+            ) : (
+              `${remaining} LEFT`
+            )}
           </p>
         </div>
       </div>

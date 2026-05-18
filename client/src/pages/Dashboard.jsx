@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
@@ -93,21 +94,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [log, setLog] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date());
   const [slideDirection, setSlideDirection] = useState("");
+  const [showResetModal, setShowResetModal] = useState(false);
   const pullProgress = useRef(0);
   const pullStartY = useRef(0);
   const pullStartX = useRef(0);
   const touchEndX = useRef(0);
   const [pullY, setPullY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -186,13 +181,17 @@ export default function Dashboard() {
     setPullY(0);
   };
 
-  const handleResetToday = async () => {
+  const handleResetClick = () => {
+    setShowResetModal(true);
+  };
+
+  const confirmResetToday = async () => {
+    setShowResetModal(false);
     const dateStr = formatDateKey(targetDate);
     const isToday = targetDate.toDateString() === new Date().toDateString();
     const label = isToday
       ? "today"
       : targetDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-    if (!window.confirm(`Are you sure you want to reset tracking for ${label}? This will clear meals and water logged for that date.`)) return;
 
     try {
       setIsLoading(true);
@@ -234,103 +233,158 @@ export default function Dashboard() {
     { label: "Fat", value: fat, target: macroTargets.fatG, color: "#f97316", bg: "var(--orange-subtle)" },
   ];
 
+  const isToday = targetDate.toDateString() === new Date().toDateString();
+  const dateLabel = isToday
+    ? "Today"
+    : targetDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const hasEntries = calories > 0 || protein > 0 || carbs > 0 || fat > 0;
+
   if (isLoading) {
     return (
       <div className="page-container" style={{ background: "var(--bg-page)" }}>
-        <header className="flex justify-between items-center mb-4 pt-2 pb-2">
+        <header className="flex justify-between items-center mb-5 pt-2">
           <div>
-            <div className="skeleton h-4 w-24 mb-2" />
-            <div className="skeleton h-7 w-40" />
+            <div className="skeleton h-4 w-24 mb-2 rounded-lg" />
+            <div className="skeleton h-7 w-36 rounded-lg" />
           </div>
-          <div className="skeleton h-8 w-20 rounded-full" />
+          <div className="skeleton h-10 w-20 rounded-xl" />
         </header>
-        <section className="card p-6 mb-4">
-          <div className="skeleton h-4 w-32 mb-6 mx-auto" />
-          <div className="skeleton h-40 w-40 rounded-full mx-auto" />
+
+        <section className="rounded-3xl p-5 mb-5" style={{ background: "var(--surface-1)", border: "1px solid var(--border-default)" }}>
+          <div className="skeleton h-44 w-44 rounded-full mx-auto" />
         </section>
-        <section className="grid grid-cols-3 gap-3 mb-4">
-          {[1, 2, 3].map(i => <div key={i} className="skeleton h-24 rounded-xl" />)}
+
+        <section className="grid grid-cols-3 gap-3 mb-5">
+          {[1, 2, 3].map(i => <div key={i} className="skeleton h-32 rounded-2xl" />)}
         </section>
-        <section className="card p-4">
-          {[1, 2, 3].map(i => <div key={i} className="skeleton h-12 w-full mb-4 last:mb-0" />)}
+
+        <section className="rounded-3xl overflow-hidden" style={{ background: "var(--surface-1)", border: "1px solid var(--border-default)" }}>
+          {[1, 2, 3].map(i => <div key={i} className="skeleton h-20 w-full mb-4 last:mb-0 mx-4 my-4 rounded-xl" />)}
         </section>
       </div>
     );
   }
 
   return (
-    <div 
-      className="page-container relative transition-transform duration-200" 
-      style={{ background: "var(--bg-page)", transform: `translateY(${pullY}px)` }}
+      <div 
+        className="page-container relative transition-transform duration-200" 
+        style={{ 
+          background: "var(--bg-page)",
+          transform: `translateY(${pullY}px)` 
+        }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {/* Pull to refresh indicator */}
       {(pullY > 0 || isRefreshing) && (
-        <div className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16">
-          <Loader2 className={`w-6 h-6 text-green-500 ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
+        <div className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50">
+          <div className="rounded-full p-3 shadow-lg" style={{ background: "var(--surface-1)", border: "1px solid var(--border-default)" }}>
+            <Loader2 className={`w-5 h-5 text-green-500 ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
+          </div>
         </div>
       )}
-      <header
-        className={`flex items-center justify-between transition-all duration-300 py-2`}
-      >
+
+      <header className="flex items-center justify-between py-2 mb-4">
         <button
           onClick={() => changeDate(-1)}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100"
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200 no-spring"
+          style={{ 
+            background: "var(--surface-1)",
+            border: "1px solid var(--border-default)",
+          }}
         >
-          <ChevronLeft className="w-5 h-5 text-gray-500" />
+          <ChevronLeft className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
         </button>
 
-        <div className="text-center animate-fade-in flex flex-col items-center">
-          <p className="text-xs font-semibold text-gray-500 mb-0.5">
-            {targetDate.toDateString() === new Date().toDateString() ? "Today" : targetDate.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}
+        <div className="text-center animate-fade-in flex flex-col items-center px-2">
+          <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>
+            {dateLabel}
           </p>
-          <h1 className="font-bold text-xl text-gray-900">
-            {targetDate.toDateString() === new Date().toDateString() ? "Dashboard" : "History"}
+          <h1 className="font-bold text-xl" style={{ color: "var(--text-primary)" }}>
+            {isToday ? greeting : "Nutrition Log"}
           </h1>
         </div>
 
         <button
           onClick={() => changeDate(1)}
-          disabled={targetDate.toDateString() === new Date().toDateString()}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent"
+          disabled={isToday}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200 disabled:opacity-30 no-spring"
+          style={{ 
+            background: "var(--surface-1)",
+            border: "1px solid var(--border-default)",
+          }}
         >
-          <ChevronRight className="w-5 h-5 text-gray-500" />
+          <ChevronRight className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
         </button>
       </header>
 
       <div className={`${slideDirection}`}>
-        <section className="card p-6 animate-fade-up mb-4" style={{ animationDelay: "0ms" }}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-              {targetDate.toDateString() === new Date().toDateString()
-                ? "Today\u2019s Calories"
-                : `${targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} Calories`
-              }
-            </p>
-            {(calories > 0 || protein > 0 || carbs > 0 || fat > 0) && (
+        <section
+          className="rounded-3xl p-5 animate-fade-up mb-5"
+          style={{
+            animationDelay: "0ms",
+            background: "var(--surface-1)",
+            border: "1px solid var(--border-default)",
+          }}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                Calorie Goal
+              </p>
+            </div>
+            {hasEntries && (
               <button
-                onClick={handleResetToday}
-                className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors hover:bg-red-50 text-red-500"
+                onClick={handleResetClick}
+                className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full"
+                style={{
+                  color: "#ef4444",
+                  background: "var(--rose-subtle)",
+                  border: "1px solid var(--rose-border)",
+                }}
               >
-                <RotateCcw className="w-3 h-3" />
+                <RotateCcw className="w-3.5 h-3.5" />
                 Reset
               </button>
             )}
           </div>
-          <div className="flex items-center justify-center">
-            <CalorieRing consumed={calories} goal={calorieGoal} size={170} />
+
+          <div className="flex items-center justify-center py-2">
+            <CalorieRing consumed={calories} goal={calorieGoal} size={176} />
           </div>
         </section>
 
-        <section className="grid grid-cols-3 gap-3 animate-fade-up mb-4" style={{ animationDelay: "100ms" }}>
-          {macroCards.map((macro, index) => (
-            <AnimatedMacroCard key={macro.label} macro={macro} delayMs={index * 100} />
-          ))}
+        <section className="animate-fade-up mb-5" style={{ animationDelay: "100ms" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              Macros
+            </h2>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              grams / target
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {macroCards.map((macro, index) => (
+              <AnimatedMacroCard key={macro.label} macro={macro} delayMs={index * 80} />
+            ))}
+          </div>
         </section>
 
-        <section className="card animate-fade-up" style={{ animationDelay: "200ms" }}>
+        <section 
+          className="animate-fade-up rounded-3xl overflow-hidden" 
+          style={{ 
+            animationDelay: "200ms",
+            background: "var(--surface-1)",
+            border: "1px solid var(--border-default)",
+          }}
+        >
+          <div className="px-5 py-4 border-b" style={{ borderColor: "var(--divider)" }}>
+            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              Meal Breakdown
+            </p>
+          </div>
+
           {sections.map((meal, index) => {
             const entries = log?.groupedMeals?.[meal._id] || [];
             const caloriesInMeal = Math.round(entries.reduce((sum, item) => sum + item.calories, 0));
@@ -342,26 +396,30 @@ export default function Dashboard() {
             return (
               <div
                 key={meal._id}
-                className="py-4 px-1"
+                className="p-5"
                 style={{ borderTop: index === 0 ? "none" : "1px solid var(--divider)" }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-50" style={{ border: "1px solid rgba(0,0,0,0.04)" }}>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-default)" }}
+                    >
                       <MealIcon name={meal.name} fallbackEmoji={meal.icon} />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-sm flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
-                        {meal.name} <span className="font-normal text-xs" style={{ color: "var(--text-muted)" }}>— {caloriesInMeal} / {mealTargetCal} kcal</span>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
+                        {meal.name}
                       </h3>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {entries.length} item{entries.length !== 1 ? "s" : ""}
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {entries.length} item{entries.length !== 1 ? "s" : ""} • {caloriesInMeal} / {mealTargetCal} kcal
                       </p>
                     </div>
                   </div>
+
                   <button
                     onClick={() => navigate(`/food-db?meal=${meal._id}`)}
-                    className="text-sm font-semibold rounded-[10px] px-4 py-2 btn-spring"
+                    className="text-xs font-semibold rounded-lg px-3 py-2 flex-shrink-0"
                     style={{
                       background: "var(--green-primary)",
                       color: "var(--text-on-green)",
@@ -371,14 +429,55 @@ export default function Dashboard() {
                     + Add
                   </button>
                 </div>
-                <div className="mt-3 pl-[52px] pr-1">
-                  <MacroBar proteinG={pInMeal} carbsG={cInMeal} fatG={fInMeal} size="sm" />
-                </div>
+
+                <MacroBar proteinG={pInMeal} carbsG={cInMeal} fatG={fInMeal} size="sm" />
               </div>
             );
           })}
         </section>
       </div>
+
+      {showResetModal && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center px-6 animate-overlay-fade"
+          style={{ background: "rgba(0, 0, 0, 0.35)" }}
+          onClick={() => setShowResetModal(false)}
+        >
+          <div 
+            className="rounded-2xl px-5 py-4 w-full max-w-[280px] animate-popup-scale"
+            style={{ 
+              background: "var(--surface-1)", 
+              border: "1px solid var(--border-default)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.12)"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-semibold text-[15px] text-center mb-1" style={{ color: "var(--text-primary)" }}>
+              Reset tracking?
+            </p>
+            <p className="text-xs text-center leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
+              This will clear all meals & water for {isToday ? "today" : targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-[13px] transition-all active:scale-[0.97]"
+                style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmResetToday}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-[13px] transition-all active:scale-[0.97]"
+                style={{ background: "#ef4444", color: "#fff" }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

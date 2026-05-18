@@ -188,6 +188,24 @@ body {
   touch-action: manipulation;
 }
 
+/* ─── Global Button Interactions ─────────────────────────── */
+button:not(.bottom-nav button):not(.no-spring):not(.filter-chip) {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+button:not(.bottom-nav button):not(.no-spring):not(.filter-chip):hover:not(:disabled) {
+  animation: springBounce 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+button:not(.bottom-nav button):not(.no-spring):not(.filter-chip):active:not(:disabled) {
+  animation: springPress 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* ─── Hide number input spinners on mobile ───────────────── */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -537,6 +555,30 @@ input[type="number"] {
   }
 }
 
+@keyframes fireFlicker {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: scale(1.1) rotate(-5deg);
+    filter: brightness(1.2);
+  }
+  50% {
+    transform: scale(1.15) rotate(5deg);
+    filter: brightness(1.3);
+  }
+  75% {
+    transform: scale(1.05) rotate(-3deg);
+    filter: brightness(1.1);
+  }
+}
+
+.animate-fire-flicker {
+  display: inline-block;
+  animation: fireFlicker 1.5s ease-in-out infinite;
+}
+
 @keyframes springBounce {
   0% {
     transform: translateY(0) scale(1);
@@ -647,6 +689,11 @@ input[type="number"] {
   75% { transform: rotate(5deg); }
 }
 .animate-bell-shake {
+  animation: bellShake 0.4s ease-in-out;
+  transform-origin: top center;
+}
+.bell-button-group:hover .bell-icon,
+.bell-button-group:active .bell-icon {
   animation: bellShake 0.4s ease-in-out;
   transform-origin: top center;
 }
