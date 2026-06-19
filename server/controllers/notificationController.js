@@ -363,11 +363,25 @@ exports.getVapidPublicKey = (req, res) => {
 exports.subscribePush = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const subscription = req.body; // { endpoint, keys: { p256dh, auth } }
+    const body = req.body || {}; // { endpoint, keys: { p256dh, auth }, expirationTime }
 
-    if (!subscription || !subscription.endpoint) {
+    // Only persist the exact Web Push fields — never store the raw request body.
+    if (
+      typeof body.endpoint !== "string" ||
+      !/^https:\/\//.test(body.endpoint) ||
+      body.endpoint.length > 1000 ||
+      !body.keys ||
+      typeof body.keys.p256dh !== "string" ||
+      typeof body.keys.auth !== "string"
+    ) {
       return res.status(400).json({ error: "Invalid subscription object" });
     }
+
+    const subscription = {
+      endpoint: body.endpoint,
+      keys: { p256dh: body.keys.p256dh, auth: body.keys.auth },
+      expirationTime: body.expirationTime ?? null,
+    };
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });

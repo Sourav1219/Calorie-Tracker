@@ -23,6 +23,16 @@ registerProcessMonitoring(logger);
 // Content-Security-Policy tuned for the app: Google Fonts, React inline styles
 // + toast-injected styles, and data:/blob: images (avatars, crop preview).
 const isProd = process.env.NODE_ENV === "production";
+
+// In production the API runs behind a single PaaS reverse proxy (TLS
+// termination / load balancer). Trust exactly one hop so req.ip reflects the
+// real client (per-IP rate limiting actually works instead of bucketing every
+// user under the proxy's IP) and secure-cookie / req.protocol detection is
+// correct. A numeric hop count (not `true`) keeps X-Forwarded-For unspoofable.
+if (isProd) {
+  app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS) || 1);
+}
+
 app.use(
   helmet({
     // Force HTTPS for a year, incl. subdomains, and opt into the browser
@@ -68,6 +78,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://calorie-tracker-eight-dusky.vercel.app",
+    "https://pureintake.app",
     "https://www.pureintake.app"
   ],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],

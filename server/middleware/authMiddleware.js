@@ -14,7 +14,11 @@ const authMiddleware = (req, res, next) => {
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Pin the algorithm so a token can't be accepted under an unexpected
+    // scheme (algorithm-confusion defense). Tokens are signed HS256.
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    });
     req.user = decoded;
     next();
   } catch (error) {
