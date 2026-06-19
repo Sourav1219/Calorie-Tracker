@@ -204,16 +204,27 @@ export default function Dashboard() {
     setSearchOpen(true);
   };
 
-  const handleAddToMeal = async (food, quantity, unit, mealType) => {
+  const handleAddToMeal = async (food, quantity, unit, mealType, preview = {}) => {
     const targetSectionId = String(mealType || activeMealId || sections[0]?._id || "").trim();
     const section = sections.find((s) => s._id === targetSectionId);
+
+    // Reflect it in today's totals immediately (the ring animates up), then save
+    // in the background and reconcile with the server (or revert on failure).
+    toast.success(`${food.name} added to ${section?.name || "meal"}`);
+    setLog((cur) => ({
+      ...(cur || {}),
+      totalCalories: (cur?.totalCalories || 0) + (preview.calories || 0),
+      totalProteinG: (cur?.totalProteinG || 0) + (preview.proteinG || 0),
+      totalCarbsG: (cur?.totalCarbsG || 0) + (preview.carbsG || 0),
+      totalFatG: (cur?.totalFatG || 0) + (preview.fatG || 0),
+    }));
+
     try {
       await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-      toast.success(`${food.name} added to ${section?.name || "meal"}`);
-      setSelectedFood(null);
       await load();
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to add food");
+      await load();
     }
   };
 

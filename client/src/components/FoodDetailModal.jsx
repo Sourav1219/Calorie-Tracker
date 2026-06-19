@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { BadgeCheck, Plus, X } from "lucide-react";
-import toast from "react-hot-toast";
 import MacroBar from "./MacroBar";
 import { useMealSections } from "../context/MealSectionContext";
 import useModalHistory from "../hooks/useModalHistory";
@@ -98,18 +97,19 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
     { key: "fat", label: "Fat", grams: f, color: "#f0857e" },
   ].map((m) => ({ ...m, pct: totalMacroCal > 0 ? (macroCals[m.key] / totalMacroCal) * 100 : 0 }));
 
-  const handleAddToMeal = async (sectionId) => {
-    try {
-      setIsSubmitting(true);
-      if (onAddToMeal) {
-        await onAddToMeal(food, Number(quantity), unit, sectionId);
-      }
-      onClose();
-    } catch (error) {
-      toast.error(error?.message || "Failed to add meal");
-    } finally {
-      setIsSubmitting(false);
+  const handleAddToMeal = (sectionId) => {
+    // Fire-and-forget: the parent applies an optimistic update and saves in the
+    // background (reverting only on failure), so the popup closes instantly and
+    // adding feels immediate. Pass the computed nutrition for the optimistic row.
+    if (onAddToMeal) {
+      onAddToMeal(food, Number(quantity), unit, sectionId, {
+        calories: cal,
+        proteinG: Number(p),
+        carbsG: Number(c),
+        fatG: Number(f),
+      });
     }
+    onClose();
   };
 
   return createPortal(

@@ -147,10 +147,16 @@ export default function FoodDatabase() {
     const targetSectionId = String(mealType || mealFromQuery || (sections[0]?._id) || "snacks").trim();
     const section = sections.find(s => s._id === targetSectionId);
     const sectionName = section ? section.name : "Meal";
-    
-    await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-    toast.success(`${food.name} added to ${sectionName}`);
-    navigate(`/log?meal=${targetSectionId}`);
+
+    // The detail popup closes instantly (fire-and-forget) so it no longer
+    // surfaces errors — handle them here.
+    try {
+      await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
+      toast.success(`${food.name} added to ${sectionName}`);
+      navigate(`/log?meal=${targetSectionId}`);
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to add food");
+    }
   };
 
   return (

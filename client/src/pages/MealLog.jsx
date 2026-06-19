@@ -53,17 +53,35 @@ export default function MealLog() {
     setCache(mealsCacheKey, meals);
   }, [mealsCacheKey, meals]);
 
-  const handleAddToMeal = async (food, quantity, unit, mealType) => {
+  const handleAddToMeal = async (food, quantity, unit, mealType, preview = {}) => {
     const targetSectionId = String(mealType || activeTab || sections[0]?._id || "").trim();
     const section = sections.find((s) => s._id === targetSectionId);
+
+    // Show it immediately — close, switch to the section, drop in an optimistic
+    // row — then persist in the background and reconcile (or revert on failure).
+    setSearchOpen(false);
+    if (targetSectionId) setActiveTab(targetSectionId);
+    toast.success(`${food.name} added to ${section?.name || "meal"}`);
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMeal = {
+      id: tempId,
+      foodItem: { name: food.name },
+      mealType: targetSectionId,
+      quantity,
+      unit,
+      calories: preview.calories || 0,
+      proteinG: preview.proteinG || 0,
+      carbsG: preview.carbsG || 0,
+      fatG: preview.fatG || 0,
+    };
+    setMeals((cur) => [optimisticMeal, ...cur]);
+
     try {
       await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-      toast.success(`${food.name} added to ${section?.name || "meal"}`);
-      setSelectedFood(null);
-      setSearchOpen(false);
-      if (targetSectionId) setActiveTab(targetSectionId);
-      await fetchMeals();
+      await fetchMeals(); // reconcile the optimistic row with the saved one
     } catch (error) {
+      setMeals((cur) => cur.filter((m) => m.id !== tempId)); // revert
       toast.error(error.response?.data?.error || "Failed to add food");
     }
   };
