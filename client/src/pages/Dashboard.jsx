@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
-import { logsAPI, mealsAPI } from "../utils/api";
+import { logsAPI, mealsAPI, getLocalDateKey } from "../utils/api";
 import { calculateMacroTargets } from "../utils/macroTargets";
 import CalorieRing from "../components/CalorieRing";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -87,13 +87,6 @@ function AnimatedMacroCard({ macro, delayMs = 0 }) {
   );
 }
 
-function formatDateKey(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export default function Dashboard() {
   const { user } = useUser();
   const { sections } = useMealSections();
@@ -123,7 +116,7 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const dateStr = formatDateKey(targetDate);
+      const dateStr = getLocalDateKey(targetDate);
       const res = await logsAPI.getToday(dateStr);
       setLog(res.data.log || null);
     } catch (error) {
@@ -213,7 +206,7 @@ export default function Dashboard() {
 
   const confirmResetToday = async () => {
     setShowResetModal(false);
-    const dateStr = formatDateKey(targetDate);
+    const dateStr = getLocalDateKey(targetDate);
     const isToday = targetDate.toDateString() === new Date().toDateString();
     const label = isToday
       ? "today"
