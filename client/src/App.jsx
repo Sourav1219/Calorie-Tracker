@@ -28,7 +28,6 @@ const Register        = lazy(() => registerChunk);
 import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
-import EdgeSwipeBack from "./components/EdgeSwipeBack";
 
 function App() {
   const { isLoggedIn, isLoading, user } = useUser();
@@ -88,9 +87,6 @@ function App() {
       </div>
 
       {isLoggedIn && !onOnboardingScreen && <BottomNav />}
-
-      {/* Edge swipe-to-go-back gesture (closes popups / returns to previous tab). */}
-      {isLoggedIn && !onOnboardingScreen && <EdgeSwipeBack />}
     </div>
   );
 }
