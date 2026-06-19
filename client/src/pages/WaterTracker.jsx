@@ -106,27 +106,25 @@ export default function WaterTracker() {
     }
   };
 
-  const removeWater = async (entryId, amountMl) => {
-    try {
-      // Trigger slide out animation first
-      setDeletingIds(curr => [...curr, entryId]);
-      
-      // Wait for animation to finish before actual deletion
-      setTimeout(async () => {
-        try {
-          await waterAPI.remove(entryId);
-          setEntries((current) => current.filter((entry) => entry.id !== entryId));
-          setTotalWater((prev) => Math.max(0, prev - amountMl));
-          setDeletingIds(curr => curr.filter(id => id !== entryId));
-        } catch (error) {
-          toast.error("Failed to delete water entry");
-          setDeletingIds(curr => curr.filter(id => id !== entryId));
-        }
-      }, 350); // Matches CSS animation duration
-      
-    } catch (error) {
-      console.error(error);
-    }
+  const removeWater = (entryId, amountMl) => {
+    // Optimistic: drop the total right away and slide the row out; the row is
+    // removed after the animation and the server delete runs in the background.
+    const snapshotEntries = entries;
+    setDeletingIds((curr) => [...curr, entryId]);
+    setTotalWater((prev) => Math.max(0, prev - amountMl));
+
+    setTimeout(async () => {
+      setEntries((current) => current.filter((entry) => entry.id !== entryId));
+      setDeletingIds((curr) => curr.filter((id) => id !== entryId));
+      try {
+        await waterAPI.remove(entryId);
+      } catch (error) {
+        // Restore the entry + total if the delete didn't go through.
+        setEntries(snapshotEntries);
+        setTotalWater((prev) => prev + amountMl);
+        toast.error("Failed to delete water entry");
+      }
+    }, 350); // matches the slide-out CSS animation duration
   };
 
   const quickAmounts = [100, 200, 250, 500];

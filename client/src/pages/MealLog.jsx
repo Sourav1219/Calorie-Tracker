@@ -95,11 +95,15 @@ export default function MealLog() {
   const totalCalories = filteredMeals.reduce((sum, meal) => sum + meal.calories, 0);
 
   const handleDelete = async (mealId) => {
+    // Remove it instantly; delete on the server in the background and restore
+    // the row only if that fails.
+    const snapshot = meals;
+    setMeals((current) => current.filter((meal) => meal.id !== mealId));
+    toast.success("Meal removed");
     try {
       await mealsAPI.remove(mealId);
-      setMeals((current) => current.filter((meal) => meal.id !== mealId));
-      toast.success("Meal removed");
     } catch (error) {
+      setMeals(snapshot);
       toast.error(error.response?.data?.error || "Failed to delete meal");
     }
   };
