@@ -6,12 +6,19 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
   const radius = size / 2 - strokeWidth;
   const circumference = 2 * Math.PI * radius;
 
-  const [dashOffset, setDashOffset] = useState(circumference);
-
   const safeGoal = Math.max(goal, 1);
   const pct = consumed / safeGoal;
   const boundedPct = Math.min(pct, 1);
   const remaining = Math.max(goal - consumed, 0);
+
+  // Always sweep the ring up from empty and count the number up from zero on
+  // mount — it looks great and plays on every visit. The page data itself is
+  // cached/instant (no skeleton/reload), so only this widget animates.
+  const [dashOffset, setDashOffset] = useState(circumference);
+  const [displayConsumed, setDisplayConsumed] = useState(0);
+  useEffect(() => {
+    setDisplayConsumed(consumed);
+  }, [consumed]);
 
   const trackColor = "var(--divider)";
 
@@ -83,7 +90,7 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <AnimatedNumber
-          value={consumed}
+          value={displayConsumed}
           className="text-4xl font-bold font-display"
           style={{ color: "var(--text-primary)", transition: "color 1s ease" }}
         />

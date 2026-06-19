@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
 import { logsAPI, mealsAPI, getLocalDateKey } from "../utils/api";
+import { getCache, setCache, hasCache } from "../utils/pageCache";
 import { calculateMacroTargets } from "../utils/macroTargets";
 import CalorieRing from "../components/CalorieRing";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -90,8 +91,11 @@ function AnimatedMacroCard({ macro, delayMs = 0 }) {
 export default function Dashboard() {
   const { user } = useUser();
   const { sections } = useMealSections();
-  const [log, setLog] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Seed from the per-session cache so revisiting this tab shows the last-known
+  // figures instantly instead of flashing a skeleton and re-animating.
+  const initialCacheKey = `dash:${getLocalDateKey(new Date())}`;
+  const [log, setLog] = useState(() => (hasCache(initialCacheKey) ? getCache(initialCacheKey) : null));
+  const [isLoading, setIsLoading] = useState(() => !hasCache(initialCacheKey));
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date());
   const [slideDirection, setSlideDirection] = useState("");
@@ -114,11 +118,20 @@ export default function Dashboard() {
   }, []);
 
   const load = useCallback(async () => {
-    setIsLoading(true);
+    const dateStr = getLocalDateKey(targetDate);
+    const cacheKey = `dash:${dateStr}`;
+    // Show cached data immediately; only fall back to the skeleton on a cold load.
+    if (hasCache(cacheKey)) {
+      setLog(getCache(cacheKey));
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
     try {
-      const dateStr = getLocalDateKey(targetDate);
       const res = await logsAPI.getToday(dateStr);
-      setLog(res.data.log || null);
+      const fresh = res.data.log || null;
+      setLog(fresh);
+      setCache(cacheKey, fresh);
     } catch (error) {
       console.error("Failed to load dashboard:", error);
     } finally {

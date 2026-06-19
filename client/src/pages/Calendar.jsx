@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, CalendarDays, Droplets, Utensils, X } from "lucide-react";
 import { logsAPI } from "../utils/api";
+import { getCache, setCache } from "../utils/pageCache";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
 import MealIcon from "../components/MealIcon";
@@ -14,7 +15,9 @@ export default function Calendar() {
   const { user } = useUser();
   const { sections } = useMealSections();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [monthLogs, setMonthLogs] = useState([]);
+  const [monthLogs, setMonthLogs] = useState(
+    () => getCache(`calendar:${new Date().getFullYear()}-${new Date().getMonth()}`) || []
+  );
   const [selectedDateKey, setSelectedDateKey] = useState(null);
   const [selectedLog, setSelectedLog] = useState(null);
   const [activeTab, setActiveTab] = useState("Calories");
@@ -34,15 +37,25 @@ export default function Calendar() {
   const todayKey = formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
 
   useEffect(() => {
+    let active = true;
+    const monthKey = `calendar:${year}-${month}`;
+    // Show the cached month immediately so the grid never blanks on revisit.
+    const cachedMonth = getCache(monthKey);
+    if (cachedMonth) setMonthLogs(cachedMonth);
+
     const fetchMonthLogs = async () => {
       try {
         const res = await logsAPI.getMonth(month + 1, year);
-        setMonthLogs(res.data.logs || []);
+        if (!active) return;
+        const logs = res.data.logs || [];
+        setMonthLogs(logs);
+        setCache(monthKey, logs);
       } catch (error) {
         console.error("Failed to load monthly logs:", error);
       }
     };
     fetchMonthLogs();
+    return () => { active = false; };
   }, [month, year]);
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Search, SearchX } from "lucide-react";
 import { foodAPI } from "../utils/api";
+import { getCache, setCache, hasCache } from "../utils/pageCache";
 import useModalHistory from "../hooks/useModalHistory";
 
 function highlightMatch(text, query) {
@@ -36,9 +37,11 @@ function SkeletonPulse({ count = 4 }) {
 export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [results, setResults] = useState([]);
+  // Seed from the cached catalog so the list is on screen the instant the
+  // sheet opens (warmed by a prefetch on login) instead of loading each time.
+  const [results, setResults] = useState(() => getCache("food:list:all") ?? []);
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => getCache("food:categories") ?? []);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const isSearching = debouncedQuery.trim().length > 0;
@@ -57,7 +60,8 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
     if (!isOpen) {
       setQuery("");
       setDebouncedQuery("");
-      setResults([]);
+      // Reset to the cached "All" list so the next open is instant, not blank.
+      setResults(getCache("food:list:all") ?? []);
       setSelectedCategory(null);
       return;
     }
@@ -67,7 +71,9 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
     foodAPI
       .getCategories()
       .then((res) => {
-        if (active) setCategories(res.data.categories || []);
+        if (!active) return;
+        setCategories(res.data.categories || []);
+        setCache("food:categories", res.data.categories || []);
       })
       .catch(() => {});
 
@@ -83,15 +89,38 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
     let active = true;
 
     const fetchList = async () => {
-      setIsLoading(true);
+      if (isSearching) {
+        // Live search — a brief skeleton while typing is expected.
+        setIsLoading(true);
+        try {
+          const res = await foodAPI.search(debouncedQuery);
+          if (active) setResults(res.data.results || []);
+        } catch (error) {
+          console.error("Food search failed:", error);
+          if (active) setResults([]);
+        } finally {
+          if (active) setIsLoading(false);
+        }
+        return;
+      }
+
+      // Browsing a section (or "All") — show the cached list instantly and
+      // only fall back to the skeleton on a true cold load, then refresh.
+      const key = `food:list:${selectedCategory ?? "all"}`;
+      if (hasCache(key)) {
+        setResults(getCache(key));
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
       try {
-        const res = isSearching
-          ? await foodAPI.search(debouncedQuery)
-          : await foodAPI.search("", selectedCategory);
-        if (active) setResults(res.data.results || []);
+        const res = await foodAPI.search("", selectedCategory);
+        if (!active) return;
+        const list = res.data.results || [];
+        setResults(list);
+        setCache(key, list);
       } catch (error) {
-        console.error("Food search failed:", error);
-        if (active) setResults([]);
+        console.error("Food browse failed:", error);
       } finally {
         if (active) setIsLoading(false);
       }

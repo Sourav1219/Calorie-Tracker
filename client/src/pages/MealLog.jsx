@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Trash2, Edit2, UtensilsCrossed } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { mealsAPI } from "../utils/api";
+import { mealsAPI, getLocalDateKey } from "../utils/api";
+import { getCache, setCache, hasCache } from "../utils/pageCache";
 import { useMealSections } from "../context/MealSectionContext";
 import MealSectionSheet from "../components/MealSectionSheet";
 import MealIcon from "../components/MealIcon";
@@ -13,8 +14,10 @@ export default function MealLog() {
   const [searchParams] = useSearchParams();
   const { sections } = useMealSections();
   const [activeTab, setActiveTab] = useState(searchParams.get("meal") || "");
-  const [meals, setMeals] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Seed today's meals from the per-session cache for an instant revisit.
+  const mealsCacheKey = `meals:${getLocalDateKey(new Date())}`;
+  const [meals, setMeals] = useState(() => (hasCache(mealsCacheKey) ? getCache(mealsCacheKey) : []));
+  const [isLoading, setIsLoading] = useState(() => !hasCache(mealsCacheKey));
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
@@ -27,20 +30,28 @@ export default function MealLog() {
   }, [sections, activeTab]);
 
   const fetchMeals = useCallback(async () => {
+    // Only show the skeleton on a cold load; otherwise refresh in the background.
+    if (!hasCache(mealsCacheKey)) setIsLoading(true);
     try {
-      setIsLoading(true);
       const res = await mealsAPI.getToday();
-      setMeals(res.data.meals || []);
+      const list = res.data.meals || [];
+      setMeals(list);
+      setCache(mealsCacheKey, list);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to load meals");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [mealsCacheKey]);
 
   useEffect(() => {
     fetchMeals();
   }, [fetchMeals]);
+
+  // Keep the cache current (incl. optimistic add/delete) for an instant revisit.
+  useEffect(() => {
+    setCache(mealsCacheKey, meals);
+  }, [mealsCacheKey, meals]);
 
   const handleAddToMeal = async (food, quantity, unit, mealType) => {
     const targetSectionId = String(mealType || activeTab || sections[0]?._id || "").trim();

@@ -1,7 +1,9 @@
-import { useLayoutEffect, useRef, lazy, Suspense } from "react";
+import { useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useUser } from "./context/UserContext";
 import { isProfileComplete } from "./utils/user";
+import { foodAPI } from "./utils/api";
+import { setCache, hasCache } from "./utils/pageCache";
 
 // Start fetching all page chunks immediately — they're cached by the time
 // the user navigates, so transitions feel instant (no spinner).
@@ -45,6 +47,22 @@ function App() {
   useLayoutEffect(() => {
     contentRef.current?.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // Warm the food catalog cache right after login so the "Add food" list opens
+  // instantly instead of fetching the whole catalog the first time it's opened.
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (!hasCache("food:list:all")) {
+      foodAPI.search("", null)
+        .then((res) => setCache("food:list:all", res.data.results || []))
+        .catch(() => {});
+    }
+    if (!hasCache("food:categories")) {
+      foodAPI.getCategories()
+        .then((res) => setCache("food:categories", res.data.categories || []))
+        .catch(() => {});
+    }
+  }, [isLoggedIn]);
 
   if (isLoading) {
     return (

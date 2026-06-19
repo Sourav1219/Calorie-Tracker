@@ -2,15 +2,29 @@ import { useEffect, useState } from "react";
 import { Droplets, Minus, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUser } from "../context/UserContext";
-import { waterAPI } from "../utils/api";
+import { waterAPI, getLocalDateKey } from "../utils/api";
+import { getCache, setCache, hasCache } from "../utils/pageCache";
 import AnimatedNumber from "../components/AnimatedNumber";
 
 export default function WaterTracker() {
   const { user } = useUser();
+  // Seed from the per-session cache so revisiting this tab shows the filled
+  // glass + entries instantly instead of re-filling from empty.
+  const cacheKey = `water:${getLocalDateKey(new Date())}`;
+  const cached = getCache(cacheKey);
+  // Start empty so the liquid fill + count-up animate in on every visit, but
+  // seed the entries list from cache so the page itself never reloads/blanks.
   const [totalWater, setTotalWater] = useState(0);
-  const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState(() => cached?.entries ?? []);
   const [customAmount, setCustomAmount] = useState(100);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !hasCache(cacheKey));
+
+  // Animate the fill up to the last-known amount right away (before the network
+  // round-trip), so the water animation plays instantly on every revisit.
+  useEffect(() => {
+    if (cached) setTotalWater(cached.totalWater || 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Animation states
   const [deletingIds, setDeletingIds] = useState([]);
@@ -19,23 +33,31 @@ export default function WaterTracker() {
   const waterGoal = user?.dailyWaterGoalMl || 2500;
   const progress = Math.min((totalWater / waterGoal) * 100, 100);
 
+  // Background refresh on mount — never flips back to the skeleton or resets the
+  // fill to zero; it just reconciles the cached figures with the server.
   useEffect(() => {
+    let active = true;
     const fetchWater = async () => {
       try {
-        setIsLoading(true);
         const res = await waterAPI.getToday();
-        const initialWater = res.data.totalWaterMl || 0;
-        setTotalWater(initialWater);
+        if (!active) return;
+        setTotalWater(res.data.totalWaterMl || 0);
         setEntries(res.data.entries || []);
       } catch (error) {
-        toast.error(error.response?.data?.error || "Failed to load water data");
+        if (active) toast.error(error.response?.data?.error || "Failed to load water data");
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     fetchWater();
+    return () => { active = false; };
   }, []);
+
+  // Keep the cache current (incl. optimistic add/remove) so the next visit is instant.
+  useEffect(() => {
+    setCache(cacheKey, { totalWater, entries });
+  }, [cacheKey, totalWater, entries]);
 
   const triggerParticles = () => {
     const newParticles = Array.from({ length: 4 }).map((_, i) => ({
