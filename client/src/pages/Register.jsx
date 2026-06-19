@@ -352,7 +352,7 @@ export default function Register() {
                 <p className="text-xs -mt-2" style={{ color: "#ef4444" }}>Passwords do not match</p>
               )}
 
-              <GoogleSignInButton />
+              <GoogleSignInButton mode="signup" />
             </div>
           )}
 

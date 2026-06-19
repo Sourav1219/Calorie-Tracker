@@ -112,7 +112,7 @@ export const adminAPI = {
 export const authAPI = {
   login: (credentials) => api.post("/auth/login", credentials),
   register: (payload) => api.post("/auth/register", payload),
-  googleLogin: (credential) => api.post("/auth/google", { credential }),
+  googleLogin: (credential, mode = "signin") => api.post("/auth/google", { credential, mode }),
   logout: () => api.post("/auth/logout"),
   me: () => api.get("/auth/me"),
   updateProfile: (payload) => api.patch("/auth/me", payload),

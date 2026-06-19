@@ -51,7 +51,7 @@ function GoogleIcon() {
  * ID-token flow); our styled button shows through underneath.
  * Renders nothing until a client ID is configured.
  */
-export default function GoogleSignInButton() {
+export default function GoogleSignInButton({ mode = "signin" }) {
   const overlayRef = useRef(null);
   const navigate = useNavigate();
   const { login } = useUser();
@@ -62,12 +62,17 @@ export default function GoogleSignInButton() {
 
     const handleCredential = async (response) => {
       try {
-        const res = await authAPI.googleLogin(response.credential);
+        // Pass the page intent so the server only signs in existing accounts
+        // ("signin") or only creates new ones ("signup") — never silently both.
+        const res = await authAPI.googleLogin(response.credential, mode);
         login(res.data.user, true);
         // New Google users have no body stats yet → finish onboarding first.
         navigate(isProfileComplete(res.data.user) ? "/dashboard" : "/register");
       } catch (err) {
-        toast.error(err.response?.data?.error || "Google sign-in failed");
+        toast.error(
+          err.response?.data?.error ||
+            (mode === "signup" ? "Google sign-up failed" : "Google sign-in failed")
+        );
       }
     };
 
@@ -82,7 +87,7 @@ export default function GoogleSignInButton() {
           type: "standard",
           theme: "outline",
           size: "large",
-          text: "continue_with",
+          text: mode === "signup" ? "signup_with" : "signin_with",
           width: overlayRef.current.offsetWidth || 320,
         });
       })
@@ -93,7 +98,7 @@ export default function GoogleSignInButton() {
     return () => {
       cancelled = true;
     };
-  }, [login, navigate]);
+  }, [login, navigate, mode]);
 
   if (!GOOGLE_CLIENT_ID) return null;
 
@@ -124,7 +129,7 @@ export default function GoogleSignInButton() {
           }}
         >
           <GoogleIcon />
-          Continue with Google
+          {mode === "signup" ? "Sign up with Google" : "Sign in with Google"}
         </button>
 
         {/* Real Google button: transparent, sits on top, captures the click */}

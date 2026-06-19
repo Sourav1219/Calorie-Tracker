@@ -209,7 +209,7 @@ export default function Login() {
             </button>
           </form>
 
-          <GoogleSignInButton />
+          <GoogleSignInButton mode="signin" />
         </div>
 
         {/* ── Create Account Link ── */}

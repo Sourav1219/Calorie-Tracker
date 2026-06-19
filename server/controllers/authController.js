@@ -376,10 +376,15 @@ async function googleAuth(req, res) {
       return res.status(503).json({ error: "Google sign-in is not configured" });
     }
 
-    const { credential } = req.body;
+    const { credential, mode } = req.body;
     if (typeof credential !== "string" || !credential) {
       return res.status(400).json({ error: "Missing Google credential" });
     }
+
+    // "signin" only authenticates an existing account; "signup" creates a new
+    // one. Default to "signin" so a missing/unknown mode can never silently
+    // create an account. The client always sends the intent of the page.
+    const intent = mode === "signup" ? "signup" : "signin";
 
     // Verify the token's signature, audience, and expiry against Google.
     let payload;
@@ -400,14 +405,28 @@ async function googleAuth(req, res) {
     const email = payload.email.toLowerCase().trim();
     const googleId = payload.sub;
 
-    // Find by email (link the account) or create a fresh one.
     let user = await User.findOne({ email });
-    if (user) {
+
+    if (intent === "signin") {
+      // Sign-in must never create an account — reject unknown Google accounts
+      // so the user is sent to sign up instead of being silently registered.
+      if (!user) {
+        return res.status(404).json({
+          error: "No account found for this Google account. Please sign up first.",
+        });
+      }
+      // Existing account → link the Google identity / backfill the photo.
       let dirty = false;
       if (!user.googleId) { user.googleId = googleId; dirty = true; }
       if (!user.photoUrl && payload.picture) { user.photoUrl = payload.picture; dirty = true; }
       if (dirty) await user.save();
     } else {
+      // Sign-up must not clobber an existing account — tell them to sign in.
+      if (user) {
+        return res.status(409).json({
+          error: "An account with this email already exists. Please sign in instead.",
+        });
+      }
       user = await User.create({
         name: payload.name || email.split("@")[0],
         email,
