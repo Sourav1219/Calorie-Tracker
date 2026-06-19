@@ -11,9 +11,15 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Cookie options tuned per environment.
- * - Prod: SameSite=None + Secure so it works cross-site over HTTPS.
+ * - Prod: SameSite=None + Secure so it works over HTTPS.
  * - Dev:  SameSite=Lax + non-secure for http://localhost (same-site).
  * rememberMe → persistent (7d) cookie; otherwise a session cookie.
+ *
+ * Set COOKIE_DOMAIN=.pureintake.app when the API runs on a subdomain (e.g.
+ * api.pureintake.app) and the app on www.pureintake.app: scoping the cookie
+ * to the shared parent domain makes it first-party/same-site, so Safari (which
+ * blocks third-party cookies by default) accepts it. Left unset, the cookie is
+ * host-only — correct for same-origin or single-host deployments.
  */
 function authCookieOptions(rememberMe = true) {
   const isProd = process.env.NODE_ENV === "production";
@@ -23,6 +29,7 @@ function authCookieOptions(rememberMe = true) {
     sameSite: isProd ? "none" : "lax",
     path: "/",
   };
+  if (process.env.COOKIE_DOMAIN) options.domain = process.env.COOKIE_DOMAIN;
   if (rememberMe) options.maxAge = SEVEN_DAYS_MS;
   return options;
 }
