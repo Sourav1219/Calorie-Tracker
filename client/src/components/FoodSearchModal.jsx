@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Search, SearchX } from "lucide-react";
 import { foodAPI } from "../utils/api";
+import useModalHistory from "../hooks/useModalHistory";
 
 function highlightMatch(text, query) {
   if (!query || !query.trim()) return text;
@@ -41,6 +42,9 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const isSearching = debouncedQuery.trim().length > 0;
+
+  // Hardware back / swipe-back closes this sheet instead of leaving the page.
+  useModalHistory(isOpen, onClose);
 
   // Debounce search input
   useEffect(() => {

@@ -4,6 +4,7 @@ import { BadgeCheck, Plus, X } from "lucide-react";
 import toast from "react-hot-toast";
 import MacroBar from "./MacroBar";
 import { useMealSections } from "../context/MealSectionContext";
+import useModalHistory from "../hooks/useModalHistory";
 
 function getMeasurementOptions(food) {
   if (Array.isArray(food?.measurementOptions) && food.measurementOptions.length > 0) {
@@ -44,6 +45,12 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
   const [showMealSelector, setShowMealSelector] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { sections } = useMealSections();
+
+  // Hardware back / swipe-back peels off one layer at a time: the meal-section
+  // selector returns to the detail view, and the detail view returns to the
+  // food list — instead of navigating the whole page away.
+  useModalHistory(Boolean(food) && showMealSelector, () => setShowMealSelector(false));
+  useModalHistory(Boolean(food), onClose);
 
   const measurementOptions = getMeasurementOptions(food);
   const defaultUnit = food?.defaultMeasurementUnit
