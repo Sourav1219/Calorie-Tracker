@@ -5,7 +5,12 @@ import { authAPI } from "../utils/api";
 import { useUser } from "../context/UserContext";
 import { isProfileComplete } from "../utils/user";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+// The OAuth client ID is public (it ships in the browser bundle), so we keep a
+// hardcoded fallback to guarantee the button renders even if the build-time
+// VITE_GOOGLE_CLIENT_ID env var isn't set on the host.
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "228804607795-g69cdfonj7sc79hfepkik9sm77thsuja.apps.googleusercontent.com";
 const GSI_SRC = "https://accounts.google.com/gsi/client";
 
 /** Load the Google Identity Services script once, shared across mounts. */
