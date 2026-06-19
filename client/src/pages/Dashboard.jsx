@@ -1,81 +1,87 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
-import { logsAPI } from "../utils/api";
+import { logsAPI, mealsAPI } from "../utils/api";
 import { calculateMacroTargets } from "../utils/macroTargets";
 import CalorieRing from "../components/CalorieRing";
+import AnimatedNumber from "../components/AnimatedNumber";
 import MacroBar from "../components/MacroBar";
 import MealIcon from "../components/MealIcon";
+import FoodSearchModal from "../components/FoodSearchModal";
+import FoodDetailModal from "../components/FoodDetailModal";
 import toast from "react-hot-toast";
+import confetti from "canvas-confetti";
 import { RotateCcw, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
+function fireGoalConfetti() {
+  const colors = ["#22c55e", "#14b8a6", "#86efac", "#facc15"];
+  const defaults = { startVelocity: 32, spread: 360, ticks: 70, zIndex: 9999, colors };
+  // Two side bursts for a celebratory pop
+  confetti({ ...defaults, particleCount: 60, origin: { x: 0.2, y: 0.4 } });
+  confetti({ ...defaults, particleCount: 60, origin: { x: 0.8, y: 0.4 } });
+}
+
 function AnimatedMacroCard({ macro, delayMs = 0 }) {
-  const [currentValue, setCurrentValue] = useState(0);
   const [barWidth, setBarWidth] = useState(0);
 
   useEffect(() => {
-    let startTime;
-    const duration = 1000;
-    const target = macro.value;
     const targetPct = macro.target > 0 ? Math.min((macro.value / macro.target) * 100, 100) : 0;
-
-    const t1 = setTimeout(() => {
-      setBarWidth(targetPct);
-    }, delayMs + 50);
-
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = timestamp - startTime;
-      const pct = Math.min(progress / duration, 1);
-
-      const easeOut = 1 - Math.pow(1 - pct, 3);
-      setCurrentValue(Math.round(target * easeOut));
-
-      if (progress < duration) {
-        requestAnimationFrame(step);
-      } else {
-        setCurrentValue(target);
-      }
-    };
-
-    const t2 = setTimeout(() => {
-      requestAnimationFrame(step);
-    }, delayMs);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const t1 = setTimeout(() => setBarWidth(targetPct), delayMs + 50);
+    return () => clearTimeout(t1);
   }, [macro.value, macro.target, delayMs]);
+
+  const pct = macro.target > 0 ? Math.round(Math.min((macro.value / macro.target) * 100, 100)) : 0;
 
   return (
     <div
       className="p-3 rounded-xl"
       style={{
-        background: "var(--surface-3)",
-        border: "1px solid var(--border-default)",
+        background: "var(--lg-tint)",
+        border: "1px solid var(--lg-border)",
+        boxShadow: "inset 0 1px 0 var(--lg-hl-top)",
       }}
     >
-      <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-        {macro.label}
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0"
+            style={{ background: `${macro.color}1f`, color: macro.color }}
+          >
+            {macro.label.charAt(0)}
+          </span>
+          <p className="text-xs font-medium truncate" style={{ color: "var(--text-muted)" }}>
+            {macro.label}
+          </p>
+        </div>
+        <span className="text-[10px] font-extrabold flex-shrink-0" style={{ color: macro.color }}>
+          {pct}%
+        </span>
+      </div>
+
+      <p className="text-lg font-bold mt-1" style={{ color: macro.color }}>
+        <AnimatedNumber value={macro.value} />g
       </p>
-      <p className="text-lg font-bold mt-0.5" style={{ color: macro.color }}>
-        {currentValue}g
-      </p>
-      <div className="w-full h-1 rounded-full mt-2 overflow-hidden" style={{ background: "var(--bg-subtle)" }}>
+
+      {/* Glossy, recessed progress bar with a soft color glow */}
+      <div
+        className="w-full h-2 rounded-full mt-2.5"
+        style={{ background: "var(--bg-subtle)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.14)" }}
+      >
         <div
           className="h-full rounded-full"
           style={{
             width: `${barWidth}%`,
-            background: macro.color,
-            transition: "width 1s cubic-bezier(0.34, 1.2, 0.64, 1)"
+            minWidth: barWidth > 0 ? "8px" : 0,
+            background: `linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 55%), ${macro.color}`,
+            boxShadow: `0 0 8px ${macro.color}80, inset 0 1px 0 rgba(255,255,255,0.4)`,
+            transition: "width 1s cubic-bezier(0.34, 1.2, 0.64, 1)",
           }}
         />
       </div>
-      <p className="text-[10px] mt-1 font-medium" style={{ color: "var(--text-muted)" }}>
-        {currentValue}g / {macro.target}g
+
+      <p className="text-[10px] mt-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
+        of {macro.target}g
       </p>
     </div>
   );
@@ -91,13 +97,15 @@ function formatDateKey(date) {
 export default function Dashboard() {
   const { user } = useUser();
   const { sections } = useMealSections();
-  const navigate = useNavigate();
   const [log, setLog] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date());
   const [slideDirection, setSlideDirection] = useState("");
   const [showResetModal, setShowResetModal] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [activeMealId, setActiveMealId] = useState(null);
   const pullProgress = useRef(0);
   const pullStartY = useRef(0);
   const pullStartX = useRef(0);
@@ -185,6 +193,24 @@ export default function Dashboard() {
     setShowResetModal(true);
   };
 
+  const openFoodSearch = (mealId) => {
+    setActiveMealId(mealId);
+    setSearchOpen(true);
+  };
+
+  const handleAddToMeal = async (food, quantity, unit, mealType) => {
+    const targetSectionId = String(mealType || activeMealId || sections[0]?._id || "").trim();
+    const section = sections.find((s) => s._id === targetSectionId);
+    try {
+      await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
+      toast.success(`${food.name} added to ${section?.name || "meal"}`);
+      setSelectedFood(null);
+      await load();
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to add food");
+    }
+  };
+
   const confirmResetToday = async () => {
     setShowResetModal(false);
     const dateStr = formatDateKey(targetDate);
@@ -220,6 +246,29 @@ export default function Dashboard() {
 
   const calorieGoal = user?.dailyCalorieGoal || 2000;
 
+  // Fire confetti only when the user crosses the goal during this session
+  // (not on initial load or when switching to an already-completed day).
+  const goalMetRef = useRef(false);
+  const goalInitRef = useRef(false);
+
+  useEffect(() => {
+    goalInitRef.current = false; // re-arm without firing whenever the date changes
+  }, [targetDate]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const met = calorieGoal > 0 && calories >= calorieGoal;
+    if (!goalInitRef.current) {
+      goalInitRef.current = true;
+      goalMetRef.current = met;
+      return;
+    }
+    if (met && !goalMetRef.current) {
+      fireGoalConfetti();
+    }
+    goalMetRef.current = met;
+  }, [calories, calorieGoal, isLoading, targetDate]);
+
   const macroTargets = useMemo(() => user?.macroTargets ||
     calculateMacroTargets(calorieGoal, user?.goal, {
       weight: user?.weight,
@@ -228,9 +277,9 @@ export default function Dashboard() {
     }), [user, calorieGoal]);
 
   const macroCards = [
-    { label: "Protein", value: protein, target: macroTargets.proteinG, color: "#3b82f6", bg: "var(--blue-subtle)" },
-    { label: "Carbs", value: carbs, target: macroTargets.carbsG, color: "#22c55e", bg: "var(--green-subtle)" },
-    { label: "Fat", value: fat, target: macroTargets.fatG, color: "#f97316", bg: "var(--orange-subtle)" },
+    { label: "Protein", value: protein, target: macroTargets.proteinG, color: "#7c93f0", bg: "var(--blue-subtle)" },
+    { label: "Carbs", value: carbs, target: macroTargets.carbsG, color: "#52bd8a", bg: "var(--green-subtle)" },
+    { label: "Fat", value: fat, target: macroTargets.fatG, color: "#f0857e", bg: "var(--orange-subtle)" },
   ];
 
   const isToday = targetDate.toDateString() === new Date().toDateString();
@@ -238,6 +287,7 @@ export default function Dashboard() {
     ? "Today"
     : targetDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   const hasEntries = calories > 0 || protein > 0 || carbs > 0 || fat > 0;
+  const loggedMealCount = sections.filter((m) => (log?.groupedMeals?.[m._id] || []).length > 0).length;
 
   if (isLoading) {
     return (
@@ -250,7 +300,7 @@ export default function Dashboard() {
           <div className="skeleton h-10 w-20 rounded-xl" />
         </header>
 
-        <section className="rounded-3xl p-5 mb-5" style={{ background: "var(--surface-1)", border: "1px solid var(--border-default)" }}>
+        <section className="rounded-3xl p-5 mb-5" style={{ background: "var(--lg-tint)", border: "1px solid var(--lg-border)" }}>
           <div className="skeleton h-44 w-44 rounded-full mx-auto" />
         </section>
 
@@ -258,7 +308,7 @@ export default function Dashboard() {
           {[1, 2, 3].map(i => <div key={i} className="skeleton h-32 rounded-2xl" />)}
         </section>
 
-        <section className="rounded-3xl overflow-hidden" style={{ background: "var(--surface-1)", border: "1px solid var(--border-default)" }}>
+        <section className="rounded-3xl overflow-hidden" style={{ background: "var(--lg-tint)", border: "1px solid var(--lg-border)" }}>
           {[1, 2, 3].map(i => <div key={i} className="skeleton h-20 w-full mb-4 last:mb-0 mx-4 my-4 rounded-xl" />)}
         </section>
       </div>
@@ -279,8 +329,8 @@ export default function Dashboard() {
       {/* Pull to refresh indicator */}
       {(pullY > 0 || isRefreshing) && (
         <div className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50">
-          <div className="rounded-full p-3 shadow-lg" style={{ background: "var(--surface-1)", border: "1px solid var(--border-default)" }}>
-            <Loader2 className={`w-5 h-5 text-green-500 ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
+          <div className="glass-green rounded-full p-3">
+            <Loader2 className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} style={{ color: "var(--green-primary)", transform: `rotate(${pullY * 2}deg)` }} />
           </div>
         </div>
       )}
@@ -288,20 +338,16 @@ export default function Dashboard() {
       <header className="flex items-center justify-between py-2 mb-4">
         <button
           onClick={() => changeDate(-1)}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200 no-spring"
-          style={{ 
-            background: "var(--surface-1)",
-            border: "1px solid var(--border-default)",
-          }}
+          className="glass-green w-10 h-10 rounded-xl flex items-center justify-center no-spring active:scale-95"
         >
-          <ChevronLeft className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
+          <ChevronLeft className="w-5 h-5" style={{ color: "var(--green-primary)" }} />
         </button>
 
         <div className="text-center animate-fade-in flex flex-col items-center px-2">
           <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>
             {dateLabel}
           </p>
-          <h1 className="font-bold text-xl" style={{ color: "var(--text-primary)" }}>
+          <h1 className="font-bold text-xl font-display" style={{ color: "var(--text-primary)" }}>
             {isToday ? greeting : "Nutrition Log"}
           </h1>
         </div>
@@ -309,131 +355,139 @@ export default function Dashboard() {
         <button
           onClick={() => changeDate(1)}
           disabled={isToday}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200 disabled:opacity-30 no-spring"
-          style={{ 
-            background: "var(--surface-1)",
-            border: "1px solid var(--border-default)",
-          }}
+          className="glass-green w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-30 no-spring active:scale-95"
         >
-          <ChevronRight className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
+          <ChevronRight className="w-5 h-5" style={{ color: "var(--green-primary)" }} />
         </button>
       </header>
 
       <div className={`${slideDirection}`}>
         <section
-          className="rounded-3xl p-5 animate-fade-up mb-5"
+          className="relative rounded-[28px] p-5 animate-fade-up mb-5 overflow-hidden"
           style={{
             animationDelay: "0ms",
-            background: "var(--surface-1)",
-            border: "1px solid var(--border-default)",
+            border: "1px solid var(--lg-border)",
+            boxShadow:
+              "inset 0 1px 0 0 var(--lg-hl-top), inset 0 -1px 1px 0 var(--lg-hl-bottom)",
           }}
         >
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                Calorie Goal
-              </p>
+          {/* Gradient mesh backdrop */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle at 12% 12%, rgba(34,197,94,0.14), transparent 45%)," +
+                "radial-gradient(circle at 88% 20%, rgba(20,184,166,0.12), transparent 45%)," +
+                "radial-gradient(circle at 50% 110%, rgba(59,130,246,0.10), transparent 55%)",
+            }}
+          />
+
+          <div className="relative">
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                  Calorie Goal
+                </p>
+              </div>
+              {hasEntries && (
+                <button
+                  onClick={handleResetClick}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full"
+                  style={{
+                    color: "#ef4444",
+                    background: "var(--rose-subtle)",
+                    border: "1px solid var(--rose-border)",
+                  }}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+              )}
             </div>
-            {hasEntries && (
-              <button
-                onClick={handleResetClick}
-                className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full"
-                style={{
-                  color: "#ef4444",
-                  background: "var(--rose-subtle)",
-                  border: "1px solid var(--rose-border)",
-                }}
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset
-              </button>
-            )}
-          </div>
 
-          <div className="flex items-center justify-center py-2">
-            <CalorieRing consumed={calories} goal={calorieGoal} size={176} />
+            <div className="flex items-center justify-center py-3">
+              <CalorieRing consumed={calories} goal={calorieGoal} size={196} />
+            </div>
+
+            {/* Macro stats integrated into the hero */}
+            <div
+              className="grid grid-cols-3 gap-3 pt-4 mt-2"
+              style={{ borderTop: "1px solid var(--divider)" }}
+            >
+              {macroCards.map((macro, index) => (
+                <AnimatedMacroCard key={macro.label} macro={macro} delayMs={index * 80} />
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="animate-fade-up mb-5" style={{ animationDelay: "100ms" }}>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-              Macros
-            </h2>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              grams / target
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {macroCards.map((macro, index) => (
-              <AnimatedMacroCard key={macro.label} macro={macro} delayMs={index * 80} />
-            ))}
-          </div>
-        </section>
-
-        <section 
-          className="animate-fade-up rounded-3xl overflow-hidden" 
-          style={{ 
-            animationDelay: "200ms",
-            background: "var(--surface-1)",
-            border: "1px solid var(--border-default)",
-          }}
-        >
-          <div className="px-5 py-4 border-b" style={{ borderColor: "var(--divider)" }}>
-            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+        <section className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
               Meal Breakdown
-            </p>
+            </h2>
+            <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+              {loggedMealCount} of {sections.length} logged
+            </span>
           </div>
 
-          {sections.map((meal, index) => {
-            const entries = log?.groupedMeals?.[meal._id] || [];
-            const caloriesInMeal = Math.round(entries.reduce((sum, item) => sum + item.calories, 0));
-            const pInMeal = entries.reduce((sum, item) => sum + item.proteinG, 0);
-            const cInMeal = entries.reduce((sum, item) => sum + item.carbsG, 0);
-            const fInMeal = entries.reduce((sum, item) => sum + item.fatG, 0);
-            const mealTargetCal = sections.length > 0 ? Math.round(calorieGoal / sections.length) : 0;
+          <div className="space-y-3">
+            {sections.map((meal, index) => {
+              const entries = log?.groupedMeals?.[meal._id] || [];
+              const caloriesInMeal = Math.round(entries.reduce((sum, item) => sum + item.calories, 0));
+              const pInMeal = entries.reduce((sum, item) => sum + item.proteinG, 0);
+              const cInMeal = entries.reduce((sum, item) => sum + item.carbsG, 0);
+              const fInMeal = entries.reduce((sum, item) => sum + item.fatG, 0);
+              const mealTargetCal = sections.length > 0 ? Math.round(calorieGoal / sections.length) : 0;
+              const isEmpty = entries.length === 0;
 
-            return (
-              <div
-                key={meal._id}
-                className="p-5"
-                style={{ borderTop: index === 0 ? "none" : "1px solid var(--divider)" }}
-              >
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-default)" }}
-                    >
+              return (
+                <div
+                  key={meal._id}
+                  className="liquid-glass rounded-2xl p-4 animate-fade-up"
+                  style={{ animationDelay: `${250 + index * 70}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="glass-green w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-lg">
                       <MealIcon name={meal.name} fallbackEmoji={meal.icon} />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>
                         {meal.name}
                       </h3>
                       <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {entries.length} item{entries.length !== 1 ? "s" : ""} • {caloriesInMeal} / {mealTargetCal} kcal
+                        {entries.length} item{entries.length !== 1 ? "s" : ""}
                       </p>
                     </div>
+
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-base leading-none" style={{ color: "var(--text-primary)" }}>
+                        {caloriesInMeal}
+                      </p>
+                      <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                        / {mealTargetCal} kcal
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => openFoodSearch(meal._id)}
+                      aria-label={`Add to ${meal.name}`}
+                      className="glass-green w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold hover:scale-[1.05] active:scale-90 transition-all duration-200 no-spring"
+                    >
+                      +
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => navigate(`/food-db?meal=${meal._id}`)}
-                    className="text-xs font-semibold rounded-lg px-3 py-2 flex-shrink-0"
-                    style={{
-                      background: "var(--green-primary)",
-                      color: "var(--text-on-green)",
-                      border: "none",
-                    }}
-                  >
-                    + Add
-                  </button>
+                  {!isEmpty && (
+                    <div className="mt-3.5">
+                      <MacroBar proteinG={pInMeal} carbsG={cInMeal} fatG={fInMeal} size="sm" />
+                    </div>
+                  )}
                 </div>
-
-                <MacroBar proteinG={pInMeal} carbsG={cInMeal} fatG={fInMeal} size="sm" />
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </section>
       </div>
 
@@ -443,12 +497,14 @@ export default function Dashboard() {
           style={{ background: "rgba(0, 0, 0, 0.35)" }}
           onClick={() => setShowResetModal(false)}
         >
-          <div 
+          <div
             className="rounded-2xl px-5 py-4 w-full max-w-[280px] animate-popup-scale"
-            style={{ 
-              background: "var(--surface-1)", 
-              border: "1px solid var(--border-default)",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.12)"
+            style={{
+              background: "linear-gradient(180deg, var(--lg-sheen), transparent 30%), var(--surface-glass)",
+              backdropFilter: "blur(24px) saturate(180%)",
+              WebkitBackdropFilter: "blur(24px) saturate(180%)",
+              border: "1px solid var(--lg-border)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18), inset 0 1px 0 var(--lg-hl-top)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -462,14 +518,28 @@ export default function Dashboard() {
               <button
                 onClick={() => setShowResetModal(false)}
                 className="flex-1 py-2.5 rounded-xl font-semibold text-[13px] transition-all active:scale-[0.97]"
-                style={{ background: "var(--bg-subtle)", color: "var(--text-secondary)" }}
+                style={{
+                  background: "linear-gradient(180deg, var(--lg-sheen), transparent 40%), var(--surface-glass)",
+                  backdropFilter: "blur(16px) saturate(160%)",
+                  WebkitBackdropFilter: "blur(16px) saturate(160%)",
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--lg-border)",
+                  boxShadow: "inset 0 1px 0 var(--lg-hl-top), inset 0 -1px 0 var(--lg-hl-bottom)",
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmResetToday}
                 className="flex-1 py-2.5 rounded-xl font-semibold text-[13px] transition-all active:scale-[0.97]"
-                style={{ background: "#ef4444", color: "#fff" }}
+                style={{
+                  background: "linear-gradient(180deg, rgba(239,68,68,0.22), rgba(239,68,68,0.12))",
+                  backdropFilter: "blur(16px) saturate(160%)",
+                  WebkitBackdropFilter: "blur(16px) saturate(160%)",
+                  color: "#ef4444",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  boxShadow: "0 3px 12px rgba(239,68,68,0.18), inset 0 1px 0 rgba(255,255,255,0.25)",
+                }}
               >
                 Reset
               </button>
@@ -478,6 +548,23 @@ export default function Dashboard() {
         </div>,
         document.body
       )}
+
+      <FoodSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        mealType={sections.find((s) => s._id === activeMealId)?.name || "meal"}
+        onSelect={(food) => {
+          setSearchOpen(false);
+          setSelectedFood(food);
+        }}
+      />
+
+      <FoodDetailModal
+        food={selectedFood}
+        onClose={() => setSelectedFood(null)}
+        onAddToMeal={handleAddToMeal}
+        targetSectionId={activeMealId}
+      />
     </div>
   );
 }

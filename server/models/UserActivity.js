@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userActivitySchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: "User",
     required: true,
     index: true
@@ -47,6 +47,10 @@ const userActivitySchema = new mongoose.Schema({
     default: null
   },
   lastStreakNotification: {
+    type: Date,
+    default: null
+  },
+  lastGoalPushSent: {
     type: Date,
     default: null
   },

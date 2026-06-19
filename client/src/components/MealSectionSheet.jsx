@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, Plus, GripVertical, Trash2 } from "lucide-react";
 import { useMealSections } from "../context/MealSectionContext";
 import MealIcon from "./MealIcon";
@@ -133,30 +134,28 @@ export default function MealSectionSheet({ isOpen, onClose }) {
     setIsAdding(false);
   };
 
-  return (
+  return createPortal(
     <>
       {/* Combined Overlay and Modal Wrapper */}
-      <div 
-        className="fixed inset-0 z-[100] flex items-center justify-center px-4 pb-24 pt-6 animate-overlay-fade"
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center px-4 pb-24 pt-6 animate-overlay-fade glass-overlay"
         style={{ background: "var(--bg-modal-overlay)" }}
       >
-        <div 
+        <div
           className="absolute inset-0"
           onClick={onClose}
         />
-        
+
         {/* Modal Body */}
-        <div 
-          className="relative w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-popup-scale max-h-full"
-          style={{ 
-            background: "var(--bg-page)", 
-            border: "1px solid var(--border-default)",
+        <div
+          className="relative w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-popup-scale max-h-full glass-surface"
+          style={{
             maxHeight: "75vh",
             boxShadow: "0 24px 80px rgba(0,0,0,0.18), 0 4px 20px rgba(0,0,0,0.1)"
           }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center px-5 py-4" style={{ borderBottom: "1px solid var(--border-default)" }}>
+          <div className="flex justify-between items-center px-5 py-4" style={{ borderBottom: "1px solid var(--lg-border)" }}>
             <div>
               <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Manage meal sections</h2>
               <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Drag to reorder • Icons auto-match</p>
@@ -182,8 +181,8 @@ export default function MealSectionSheet({ isOpen, onClose }) {
                   onDragEnd={handleDragEnd}
                   className="flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all duration-150"
                   style={{
-                    borderColor: draggedIdx === index ? "var(--green-primary)" : "var(--border-default)",
-                    background: draggedIdx === index ? "var(--green-subtle)" : "var(--surface-1)",
+                    borderColor: draggedIdx === index ? "var(--green-primary)" : "var(--lg-border)",
+                    background: draggedIdx === index ? "var(--green-subtle)" : "var(--lg-tint)",
                     opacity: draggedIdx === index ? 0.7 : 1,
                     transform: draggedIdx === index ? "scale(1.02)" : "scale(1)",
                   }}
@@ -192,7 +191,7 @@ export default function MealSectionSheet({ isOpen, onClose }) {
                     <div className="cursor-grab active:cursor-grabbing p-0.5" style={{ color: "var(--text-muted)" }}>
                       <GripVertical className="w-4 h-4" />
                     </div>
-                    <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                    <span className="glass-green flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg">
                       <MealIcon name={section.name} fallbackEmoji={section.icon || DEFAULT_ICON} />
                     </span>
                     <input 
@@ -208,7 +207,7 @@ export default function MealSectionSheet({ isOpen, onClose }) {
                       maxLength={30}
                     />
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       if (sections.length <= 1) return;
                       if (window.confirm(`Delete "${section.name}"? Logged items under this section will appear as "Deleted section" in history.`)) {
@@ -216,7 +215,13 @@ export default function MealSectionSheet({ isOpen, onClose }) {
                       }
                     }}
                     disabled={sections.length <= 1}
-                    className={`p-1.5 rounded-lg transition-colors ${sections.length <= 1 ? "opacity-20 cursor-not-allowed" : "hover:bg-red-50 text-red-500"}`}
+                    className={`flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 transition-all active:scale-90 ${sections.length <= 1 ? "opacity-20 cursor-not-allowed" : ""}`}
+                    style={{
+                      background: "linear-gradient(180deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.07) 100%)",
+                      border: "1px solid rgba(239,68,68,0.2)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)",
+                      color: "#ef4444",
+                    }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -268,7 +273,7 @@ export default function MealSectionSheet({ isOpen, onClose }) {
                     setIsAdding(true);
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed transition-all duration-200 hover:border-green-400 hover:bg-green-50/50"
-                  style={{ borderColor: "var(--border-default)", color: "var(--text-muted)", background: "transparent" }}
+                  style={{ borderColor: "var(--lg-border)", color: "var(--text-muted)", background: "transparent" }}
                 >
                   <Plus className="w-4 h-4" />
                   <span className="text-sm font-medium">Add section</span>
@@ -283,17 +288,17 @@ export default function MealSectionSheet({ isOpen, onClose }) {
           </div>
           
           {/* Footer */}
-          <div className="px-5 py-3.5" style={{ borderTop: "1px solid var(--border-default)" }}>
-            <button 
+          <div className="px-5 py-3.5" style={{ borderTop: "1px solid var(--lg-border)" }}>
+            <button
               onClick={onClose}
-              className="w-full py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
-              style={{ background: "var(--green-primary)", color: "var(--text-on-green)" }}
+              className="glass-green w-full text-sm font-bold rounded-xl py-2.5 transition-all duration-200 hover:scale-[1.05] active:scale-95 no-spring"
             >
               Done
             </button>
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

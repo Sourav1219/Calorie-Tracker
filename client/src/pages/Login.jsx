@@ -4,6 +4,12 @@ import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../utils/api";
 import { useUser } from "../context/UserContext";
+import BrandMark from "../components/BrandMark";
+import GoogleSignInButton from "../components/GoogleSignInButton";
+
+function isValidEmail(email) {
+  return /^[a-zA-Z0-9.]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+}
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -41,14 +47,12 @@ export default function Login() {
       const res = await api.post("/auth/login", {
         email: form.email.trim().toLowerCase(),
         password: form.password,
+        rememberMe,
       });
 
-      console.log("LOGIN RESPONSE:", res.data); // 🔥
-
-      // ✅ SAVE TOKEN & USER (Updates state and localStorage)
-      login(res.data.user, res.data.token, rememberMe);
-
-      console.log("TOKEN SAVED:", localStorage.getItem("token")); // 🔥
+      // Auth token is set by the server as an httpOnly cookie; we only
+      // cache the returned profile for instant UI.
+      login(res.data.user, rememberMe);
 
       // ✅ Redirect
       navigate("/dashboard");
@@ -78,17 +82,12 @@ export default function Login() {
       <div className="w-full max-w-sm relative z-10 profile-fade-in">
         {/* ── Logo & Brand ── */}
         <div className="text-center mb-5">
-          <div 
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl"
-            style={{ 
-              background: "linear-gradient(145deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05))",
-              border: "1px solid rgba(34,197,94,0.2)",
-              boxShadow: "0 8px 24px rgba(34,197,94,0.1)"
-            }}
-          >
-            🥗
-          </div>
-          <h1 className="text-xl font-black tracking-tight" style={{ color: "var(--text-primary)" }}>PureIntake</h1>
+          <BrandMark
+            size={60}
+            className="mx-auto mb-3"
+            style={{ filter: "drop-shadow(0 10px 24px rgba(34,197,94,0.35))" }}
+          />
+          <h1 className="text-xl font-black tracking-tight font-display" style={{ color: "var(--text-primary)" }}>PureIntake</h1>
           <p className="text-xs mt-1 font-medium" style={{ color: "var(--text-muted)" }}>Track smarter. Eat better.</p>
         </div>
 
@@ -96,8 +95,8 @@ export default function Login() {
         <div 
           className="rounded-[20px] p-5 profile-stat-card"
           style={{ 
-            background: "rgba(255,255,255,0.85)",
-            border: "1px solid rgba(0,0,0,0.06)",
+            background: "var(--surface-glass)",
+            border: "1px solid var(--border-glass)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             boxShadow: "0 12px 40px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.03)",
@@ -114,8 +113,8 @@ export default function Login() {
               <label htmlFor="login-email" className="block text-[10px] font-bold uppercase tracking-wider mb-1 ml-1" style={{ color: "var(--text-muted)" }}>
                 Email
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
+              <div className="relative flex items-center">
+                <Mail className="absolute left-3 w-4 h-4 pointer-events-none z-10" style={{ color: "var(--text-muted)" }} />
                 <input
                   id="login-email"
                   type="email"
@@ -125,14 +124,17 @@ export default function Login() {
                   className="input-field pl-10 text-sm h-11"
                 />
               </div>
+              {form.email.trim() && !isValidEmail(form.email.trim()) && (
+                <p className="text-[11px] font-semibold mt-1 ml-1" style={{ color: "#dc2626" }}>Enter a valid email address</p>
+              )}
             </div>
 
             <div>
               <label htmlFor="login-password" className="block text-[10px] font-bold uppercase tracking-wider mb-1 ml-1" style={{ color: "var(--text-muted)" }}>
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
+              <div className="relative flex items-center">
+                <Lock className="absolute left-3 w-4 h-4 pointer-events-none z-10" style={{ color: "var(--text-muted)" }} />
                 <input
                   id="login-password"
                   type={showPassword ? "text" : "password"}
@@ -141,20 +143,39 @@ export default function Login() {
                   onChange={(e) => setField("password", e.target.value)}
                   className="input-field pl-10 pr-10 text-sm h-11"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }}>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 z-10 flex items-center justify-center no-spring" style={{ color: "var(--text-muted)" }}>
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: "var(--text-secondary)" }}>
+            <label className="flex w-fit items-center gap-2.5 text-xs font-semibold cursor-pointer select-none" style={{ color: "var(--text-secondary)" }}>
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-3.5 h-3.5 rounded"
-                style={{ accentColor: "var(--green-primary)" }}
+                className="hidden"
               />
+              <span
+                className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all duration-200"
+                style={{
+                  background: rememberMe
+                    ? "linear-gradient(180deg, rgba(34,197,94,0.22), rgba(34,197,94,0.10))"
+                    : "var(--lg-tint)",
+                  border: rememberMe
+                    ? "1.5px solid var(--green-border)"
+                    : "1.5px solid var(--lg-border)",
+                  boxShadow: rememberMe
+                    ? "inset 0 1px 0 rgba(255,255,255,0.35), 0 0 8px rgba(34,197,94,0.15)"
+                    : "inset 0 1px 0 var(--lg-hl-top)",
+                }}
+              >
+                {rememberMe && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2.5 6L5 8.5L9.5 3.5" stroke="var(--green-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
               Remember me
             </label>
 
@@ -175,17 +196,11 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all duration-200 active:scale-[0.97] disabled:opacity-60"
-              style={{
-                background: "var(--green-primary)",
-                color: "var(--text-on-green)",
-                border: "none",
-                boxShadow: "0 6px 20px rgba(34,197,94,0.3)",
-              }}
+              className="glass-green w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] no-spring disabled:opacity-60"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -193,6 +208,8 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          <GoogleSignInButton />
         </div>
 
         {/* ── Create Account Link ── */}

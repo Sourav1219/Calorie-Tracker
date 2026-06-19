@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { BadgeCheck, Plus, X } from "lucide-react";
 import toast from "react-hot-toast";
 import MacroBar from "./MacroBar";
@@ -39,7 +40,7 @@ function convertQuantityBetweenUnits(quantity, fromUnit, toUnit, measurementOpti
 
 export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSectionId }) {
   const [quantity, setQuantity] = useState(1);
-  const [unit, setUnit] = useState("katori");
+  const [unit, setUnit] = useState("");
   const [showMealSelector, setShowMealSelector] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { sections } = useMealSections();
@@ -81,6 +82,15 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
   const sugar = (food.sugarG * multiplier).toFixed(1);
   const sodium = Math.round(food.sodiumMg * multiplier);
 
+  // Macro energy split for the colored stat cards
+  const macroCals = { protein: Number(p) * 4, carbs: Number(c) * 4, fat: Number(f) * 9 };
+  const totalMacroCal = macroCals.protein + macroCals.carbs + macroCals.fat;
+  const macros = [
+    { key: "protein", label: "Protein", grams: p, color: "#7c93f0" },
+    { key: "carbs", label: "Carbs", grams: c, color: "#52bd8a" },
+    { key: "fat", label: "Fat", grams: f, color: "#f0857e" },
+  ].map((m) => ({ ...m, pct: totalMacroCal > 0 ? (macroCals[m.key] / totalMacroCal) * 100 : 0 }));
+
   const handleAddToMeal = async (sectionId) => {
     try {
       setIsSubmitting(true);
@@ -95,7 +105,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay">
       <div
         className="absolute inset-0"
@@ -104,17 +114,17 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
 
       {!showMealSelector ? (
         <div className="modal-card animate-slide-up">
-          <div className="flex-shrink-0 flex items-start justify-between px-4 py-3 sm:px-5" style={{ borderBottom: "1px solid var(--border-default)" }}>
+          <div className="flex-shrink-0 flex items-start justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--lg-border)" }}>
             <div className="pr-4">
               <div className="mb-1.5 flex items-center gap-2">
                 <h2 className="text-lg font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
                   {food.name}
                 </h2>
-                {food.isVerified && <BadgeCheck className="h-5 w-5" style={{ color: "var(--green-primary)" }} />}
+                {food.isVerified && <BadgeCheck className="h-5 w-5 flex-shrink-0" style={{ color: "var(--green-primary)" }} />}
               </div>
               <span
                 className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"
-                style={{ background: "var(--surface-3)", color: "var(--text-secondary)" }}
+                style={{ background: "var(--green-subtle)", color: "var(--green-text)", border: "1px solid var(--green-border)" }}
               >
                 {food.category}
               </span>
@@ -122,101 +132,125 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             <button
               onClick={onClose}
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
-              style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+              style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           <div
-            className="flex-1 overflow-y-auto px-4 py-4 sm:px-5 space-y-4 hide-scrollbar"
+            className="flex-1 overflow-y-auto px-5 py-4 space-y-4 hide-scrollbar"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
-              <div className="rounded-2xl p-3.5" style={{ border: "1px solid var(--border-default)", background: "var(--surface-3)" }}>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
-                  Calories
-                </p>
-                <div className="mt-2 flex items-end gap-2">
-                  <span className="text-3xl font-black leading-none" style={{ color: "var(--text-primary)" }}>
-                    {cal}
-                  </span>
-                  <span className="pb-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>kcal</span>
-                </div>
-
-                <div className="mt-3">
-                  <MacroBar proteinG={p} carbsG={c} fatG={f} size="md" />
-                </div>
-              </div>
-
-              <div className="rounded-2xl p-3.5" style={{ border: "1px solid var(--border-default)", background: "var(--surface-3)" }}>
-                <label className="mb-2 block text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-                  Serving size
-                </label>
-                <div className="grid gap-2">
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    className="input-field"
-                  />
-                  <select
-                    value={unit}
-                    onChange={(e) => {
-                      const nextUnit = e.target.value;
+            {/* Serving size control */}
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                Serving size
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="input-field flex-1"
+                />
+                <select
+                  value={unit}
+                  onChange={(e) => {
+                    const nextUnit = e.target.value;
+                    if (food?.brand?.toLowerCase() !== "amul") {
                       setQuantity((currentQuantity) =>
                         convertQuantityBetweenUnits(currentQuantity, unit, nextUnit, measurementOptions)
                       );
-                      setUnit(nextUnit);
-                    }}
-                    className="input-field"
-                  >
-                    {measurementOptions.map((option) => (
-                      <option key={option.unit} value={option.unit}>
-                        {option.label || option.unit}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    }
+                    setUnit(nextUnit);
+                  }}
+                  className="input-field flex-1"
+                >
+                  {measurementOptions.map((option) => (
+                    <option key={option.unit} value={option.unit}>
+                      {option.label || option.unit}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
-              <div className="px-3 py-2 text-sm font-semibold" style={{ borderBottom: "1px solid var(--divider)", color: "var(--text-secondary)", background: "var(--surface-3)" }}>
-                Nutrition Facts
+            {/* Calorie hero */}
+            <div
+              className="rounded-2xl p-5 text-center relative overflow-hidden"
+              style={{
+                background: "linear-gradient(180deg, var(--green-subtle), transparent 90%), var(--lg-tint)",
+                border: "1px solid var(--green-border)",
+                boxShadow: "inset 0 1px 0 var(--lg-hl-top)",
+              }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>
+                Calories
+              </p>
+              <div className="mt-1 flex items-end justify-center gap-1.5">
+                <span className="text-5xl font-black leading-none" style={{ color: "var(--text-primary)", letterSpacing: "-1px" }}>
+                  {cal}
+                </span>
+                <span className="pb-1.5 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>kcal</span>
               </div>
+              <p className="mt-1.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                per {quantity} {getUnitLabel(measurementOptions, unit)}
+              </p>
+              <div className="mt-3.5">
+                <MacroBar proteinG={p} carbsG={c} fatG={f} size="sm" />
+              </div>
+            </div>
+
+            {/* Macro stat cards */}
+            <div className="grid grid-cols-3 gap-2.5">
+              {macros.map((m) => (
+                <div
+                  key={m.key}
+                  className="rounded-2xl p-3"
+                  style={{ background: `${m.color}14`, border: `1px solid ${m.color}33` }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
+                    <span className="text-[11px] font-bold truncate" style={{ color: "var(--text-secondary)" }}>{m.label}</span>
+                  </div>
+                  <p className="mt-1.5 text-xl font-black leading-none" style={{ color: m.color }}>
+                    {m.grams}<span className="text-xs font-bold">g</span>
+                  </p>
+                  <div className="mt-2.5 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-subtle)" }}>
+                    <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${m.pct}%`, background: m.color }} />
+                  </div>
+                  <p className="mt-1 text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                    {Math.round(m.pct)}% energy
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Extra nutrition chips */}
+            <div className="grid grid-cols-3 gap-2.5">
               {[
-                ["Calories", `${cal} kcal`, true],
-                ["Protein", `${p} g`],
-                ["Carbs", `${c} g`],
-                ["Fat", `${f} g`],
-                ["Fibre", `${fibre} g`],
-                ["Sugar", `${sugar} g`],
-                ["Sodium", `${sodium} mg`],
-              ].map(([label, value, isCalories], idx) => (
+                ["Fibre", `${fibre}`, "g"],
+                ["Sugar", `${sugar}`, "g"],
+                ["Sodium", `${sodium}`, "mg"],
+              ].map(([label, value, unitLabel]) => (
                 <div
                   key={label}
-                  className="flex items-center justify-between px-3 py-2"
-                  style={{ borderTop: idx === 0 ? "none" : "1px solid var(--divider)" }}
+                  className="rounded-2xl p-3 text-center"
+                  style={{ background: "var(--lg-tint)", border: "1px solid var(--lg-border)", boxShadow: "inset 0 1px 0 var(--lg-hl-top)" }}
                 >
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</span>
-                  <span
-                    style={{
-                      color: "var(--text-primary)",
-                      fontSize: isCalories ? "20px" : "14px",
-                      fontWeight: isCalories ? 700 : 600,
-                    }}
-                  >
-                    {value}
-                  </span>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{label}</p>
+                  <p className="mt-1 text-base font-extrabold leading-none" style={{ color: "var(--text-primary)" }}>
+                    {value}<span className="text-[10px] font-semibold ml-0.5" style={{ color: "var(--text-muted)" }}>{unitLabel}</span>
+                  </p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex-shrink-0 p-4 sm:p-5 pt-3" style={{ borderTop: "1px solid var(--border-default)" }}>
+          <div className="flex-shrink-0 p-4 sm:p-5 pt-3" style={{ borderTop: "1px solid var(--lg-border)" }}>
             <button
               onClick={() => {
                 if (targetSectionId) {
@@ -226,16 +260,11 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
                 }
               }}
               disabled={isSubmitting}
-              className="w-full h-[52px] flex items-center justify-center gap-2 rounded-[14px] font-semibold transition-all duration-150 active:scale-[0.98] btn-spring disabled:opacity-50"
-              style={{
-                background: "var(--green-primary)",
-                color: "var(--text-on-green)",
-                border: "none",
-              }}
+              className="glass-green w-full h-[52px] flex items-center justify-center gap-2 rounded-[14px] font-bold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] no-spring disabled:opacity-50"
             >
               {isSubmitting && targetSectionId ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                   Adding...
                 </>
               ) : (
@@ -249,7 +278,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
         </div>
       ) : (
         <div className="modal-card animate-fade-up">
-          <div className="flex items-start justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border-default)" }}>
+          <div className="flex items-start justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--lg-border)" }}>
             <div className="pr-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
                 Select meal section
@@ -261,14 +290,14 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             <button
               onClick={() => setShowMealSelector(false)}
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
-              style={{ background: "#fee2e2", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+              style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           <div className="space-y-4 px-4 py-4">
-            <div className="rounded-2xl px-3.5 py-3" style={{ border: "1px solid var(--border-default)", background: "var(--surface-3)" }}>
+            <div className="rounded-2xl px-3.5 py-3" style={{ border: "1px solid var(--lg-border)", background: "var(--lg-tint)" }}>
               <div className="flex items-center justify-between text-sm">
                 <span style={{ color: "var(--text-muted)" }}>Serving</span>
                 <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
@@ -289,8 +318,9 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
                   onClick={() => handleAddToMeal(section._id)}
                   className="rounded-xl border py-3.5 text-sm font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-50"
                   style={{
-                    borderColor: "var(--border-default)",
-                    background: "var(--surface-3)",
+                    background: "var(--lg-tint)",
+                    border: "1px solid var(--lg-border)",
+                    boxShadow: "inset 0 1px 0 var(--lg-hl-top)",
                     color: "var(--text-secondary)",
                   }}
                 >
@@ -301,6 +331,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -52,13 +52,43 @@
   --teal-subtle: #f0fdfa;
   --teal-border: #99f6e4;
 
-  --bg-page: #f9fafb;
+  --bg-page-solid: #f9fafb;
+  --bg-page: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(34, 197, 94, 0.07), transparent 70%), #f9fafb;
   --bg-subtle: #f3f4f6;
   --bg-modal-overlay: rgba(0, 0, 0, 0.45);
 
   --surface-1: #ffffff;
   --surface-3: #f3f4f6;
   --surface-modal: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.82);
+  --border-glass: rgba(255, 255, 255, 0.55);
+  --panel-surface: rgba(255, 255, 255, 0.98);
+
+  --nav-surface: rgba(249, 250, 251, 0.8);
+  --glass-nav-bg: rgba(255, 255, 255, 0.72);
+  --glass-nav-border: rgba(255, 255, 255, 0.65);
+
+  /* ── Liquid Glass material (light) ───────────────────────── */
+  --lg-tint: rgba(255, 255, 255, 0.6);
+  --lg-tint-strong: rgba(255, 255, 255, 0.72);
+  --lg-border: rgba(0, 0, 0, 0.08);           /* dark subtle border — visible on light bg */
+  --lg-sheen: rgba(255, 255, 255, 0.55);      /* top gloss */
+  --lg-hl-top: rgba(255, 255, 255, 0.9);      /* crisp top specular edge */
+  --lg-hl-bottom: rgba(255, 255, 255, 0.3);   /* soft lower rim */
+  --lg-shadow: rgba(17, 24, 39, 0.08);
+  --lg-shadow-strong: rgba(17, 24, 39, 0.14);
+  /* Glass control buttons (toggle, bell) — need a visible edge on light surfaces */
+  --lg-control-bg: rgba(255, 255, 255, 0.55);
+  --lg-control-border: rgba(17, 24, 39, 0.05);
+  --lg-control-shadow: rgba(17, 24, 39, 0.06);
+  /* Selectable tab/pill — inactive state (light) */
+  --tab-inactive-bg: linear-gradient(180deg, rgba(255,255,255,0.68), rgba(255,255,255,0.40));
+  --tab-inactive-border: rgba(0,0,0,0.09);
+  --tab-inactive-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 4px rgba(0,0,0,0.06);
+  --tab-inactive-color: var(--text-secondary);
+  /* Bottom-nav active capsule — a neutral frosted highlight */
+  --nav-pill-active: rgba(20, 30, 50, 0.09);
+  --nav-pill-border: rgba(17, 24, 39, 0.06);
 
   --border-default: #e5e7eb;
   --border-strong: #d1d5db;
@@ -111,16 +141,47 @@
   --teal-subtle: rgba(20, 184, 166, 0.1);
   --teal-border: rgba(20, 184, 166, 0.25);
 
-  --bg-page: #0f172a;
-  --bg-subtle: #1e293b;
-  --bg-modal-overlay: rgba(0, 0, 0, 0.65);
+  /* Layered elevation for a premium dark look (deep base → lighter surfaces) */
+  --bg-page-solid: #0b1120;
+  --bg-page: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(34, 197, 94, 0.08), transparent 70%), #0b1120;
+  --bg-subtle: #121a2b;
+  --bg-modal-overlay: rgba(2, 6, 16, 0.7);
 
-  --surface-1: #1e293b;
-  --surface-3: #1e293b;
-  --surface-modal: #1e293b;
+  --surface-1: #151d2e;
+  --surface-3: #1e2940;
+  --surface-modal: #161f31;
+  --surface-glass: rgba(22, 31, 49, 0.82);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --panel-surface: rgba(20, 28, 45, 0.985);
 
-  --border-default: #334155;
-  --border-strong: #475569;
+  --nav-surface: rgba(11, 17, 32, 0.82);
+  --glass-nav-bg: rgba(22, 31, 49, 0.72);
+  --glass-nav-border: rgba(255, 255, 255, 0.08);
+
+  /* ── Liquid Glass material (dark) ────────────────────────── */
+  --lg-tint: rgba(26, 36, 56, 0.55);
+  --lg-tint-strong: rgba(26, 36, 56, 0.68);
+  --lg-border: rgba(255, 255, 255, 0.12);
+  --lg-sheen: rgba(255, 255, 255, 0.1);
+  --lg-hl-top: rgba(255, 255, 255, 0.2);
+  --lg-hl-bottom: rgba(255, 255, 255, 0.04);
+  --lg-shadow: rgba(0, 0, 0, 0.45);
+  --lg-shadow-strong: rgba(0, 0, 0, 0.6);
+  /* Glass control buttons (toggle, bell) */
+  --lg-control-bg: rgba(255, 255, 255, 0.08);
+  --lg-control-border: rgba(255, 255, 255, 0.16);
+  --lg-control-shadow: rgba(0, 0, 0, 0.3);
+  /* Selectable tab/pill — inactive state (dark) */
+  --tab-inactive-bg: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+  --tab-inactive-border: rgba(255,255,255,0.13);
+  --tab-inactive-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.25);
+  --tab-inactive-color: var(--text-secondary);
+  /* Bottom-nav active capsule — a neutral frosted highlight */
+  --nav-pill-active: rgba(255, 255, 255, 0.14);
+  --nav-pill-border: rgba(255, 255, 255, 0.2);
+
+  --border-default: #2a3650;
+  --border-strong: #3b4a68;
   --divider: #334155;
 
   --shadow-modal: 0 20px 60px -12px rgba(0, 0, 0, 0.5),
@@ -134,6 +195,19 @@
   box-sizing: border-box;
 }
 
+/* ─── Theme switch (View Transitions circular wipe) ──────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
 /* Modal Open State */
 body.modal-open {
   overflow: hidden;
@@ -145,23 +219,53 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.4);
+  /* Keep modals inside safe area and away from screen edges */
+  padding:
+    max(env(safe-area-inset-top), 16px)
+    16px
+    max(env(safe-area-inset-bottom), 16px);
+  background: var(--bg-modal-overlay);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
   z-index: 100;
 }
 
 .modal-card {
-  width: 90%;
+  width: 100%; /* overlay padding provides the side spacing */
   max-width: 420px;
-  height: 65vh;
-  height: 65dvh; /* better on iPhone */
-  max-height: 600px;
-  background: var(--surface-modal);
+  height: 65dvh;
+  max-height: min(600px, calc(100dvh - max(env(safe-area-inset-top), 16px) - max(env(safe-area-inset-bottom), 16px) - 16px));
+  background:
+    linear-gradient(180deg, var(--lg-sheen), transparent 30%),
+    var(--surface-glass);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--lg-border);
   border-radius: 24px;
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: var(--shadow-modal);
+  box-shadow:
+    var(--shadow-modal),
+    inset 0 1px 0 0 var(--lg-hl-top),
+    inset 0 -1px 1px 0 var(--lg-hl-bottom);
   display: flex;
   flex-direction: column;
+}
+
+/* ─── Reusable glass surfaces for inline-styled modals ───── */
+.glass-overlay {
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+}
+
+.glass-surface {
+  background:
+    linear-gradient(180deg, var(--lg-sheen), transparent 30%),
+    var(--surface-glass) !important;
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--lg-border);
+  box-shadow: inset 0 1px 0 0 var(--lg-hl-top), inset 0 -1px 1px 0 var(--lg-hl-bottom);
 }
 
 body.modal-open .bottom-nav {
@@ -186,12 +290,48 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* Faster taps on mobile — removes 300ms delay */
   touch-action: manipulation;
+  /* Tabular figures: stops layout jitter as animated counters change width */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
-/* ─── Global Button Interactions ─────────────────────────── */
+/* Tighter tracking on bold display headings for a more premium feel */
+.font-black,
+.font-bold {
+  letter-spacing: -0.015em;
+}
+
+/* ─── Global Button Interactions + Liquid Glass sheen ────── */
 button:not(.bottom-nav button):not(.no-spring):not(.filter-chip) {
   will-change: transform;
   transform: translateZ(0);
+  position: relative;
+}
+
+/* Liquid Glass overlay: top gloss sheen + flowing specular edge
+   highlights. Sits on top of whatever background the button has
+   (works over solid CTAs, tinted chips, etc.) without overriding it. */
+button:not(.bottom-nav button):not(.no-spring):not(.filter-chip)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 46%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+button:not(.bottom-nav button):not(.no-spring):not(.filter-chip):active:not(:disabled)::before {
+  opacity: 0.6;
+}
+
+button:not(.bottom-nav button):not(.no-spring):not(.filter-chip):disabled::before {
+  opacity: 0.4;
 }
 
 button:not(.bottom-nav button):not(.no-spring):not(.filter-chip):hover:not(:disabled) {
@@ -216,6 +356,46 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* Water goal range slider — glassy blue track + floating thumb */
+.water-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7dd3fc 0%, #38bdf8 55%, #0ea5e9 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+  outline: none;
+  cursor: pointer;
+}
+
+.water-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #0ea5e9;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.water-range::-webkit-slider-thumb:active {
+  transform: scale(1.12);
+}
+
+.water-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #0ea5e9;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.45);
+  cursor: pointer;
 }
 
 #root {
@@ -308,12 +488,80 @@ input[type="number"] {
 
 /* ─── Utility Classes ────────────────────────────────────── */
 @layer components {
-  .card {
-    @apply bg-card rounded-2xl shadow-card p-4 transition-shadow duration-200;
+  /* ── Liquid Glass material ───────────────────────────────
+     Translucent, saturated backdrop + flowing specular edge
+     highlights + a top gloss sheen + layered floating depth.
+     Adapts to light/dark via the --lg-* tokens. */
+  .card,
+  .liquid-glass {
+    position: relative;
+    background:
+      linear-gradient(180deg, var(--lg-sheen), transparent 38%),
+      var(--lg-tint-strong);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border: 1px solid var(--lg-border);
+    box-shadow:
+      0 8px 24px var(--lg-shadow),
+      inset 0 1px 0 0 var(--lg-hl-top),
+      inset 0 -1px 1px 0 var(--lg-hl-bottom);
+    /* Promote to its own compositing layer so the shadow/backdrop repaints
+       cleanly during scroll instead of leaving rectangular ghost trails. */
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    isolation: isolate;
   }
 
-  .card:hover {
-    @apply shadow-card-hover;
+  .card {
+    @apply rounded-2xl p-4 transition-all duration-200;
+  }
+
+  .liquid-glass {
+    @apply transition-all duration-200;
+  }
+
+  /* Brand-green frosted glass — matches the bottom-nav active capsule.
+     Use on standalone glass buttons/chips that should carry the site accent. */
+  .glass-green {
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0.08));
+    border: 1px solid var(--green-border);
+    box-shadow: 0 3px 12px rgba(34, 197, 94, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    color: var(--green-primary);
+    transition: all 0.2s ease;
+  }
+
+  @media (hover: hover) {
+    .glass-green:hover {
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.24), rgba(34, 197, 94, 0.12));
+      box-shadow: 0 5px 16px rgba(34, 197, 94, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  /* Frosted blue glass — water-theme counterpart of .glass-green */
+  .glass-blue {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.1));
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 3px 12px rgba(14, 165, 233, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    color: #0ea5e9;
+    transition: all 0.2s ease;
+  }
+
+  @media (hover: hover) {
+    .glass-blue:hover {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.26), rgba(14, 165, 233, 0.14));
+      box-shadow: 0 5px 16px rgba(14, 165, 233, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  @media (hover: hover) {
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 16px 38px var(--lg-shadow-strong),
+        inset 0 1px 0 0 var(--lg-hl-top),
+        inset 0 -1px 1px 0 var(--lg-hl-bottom);
+    }
   }
 
   .btn-primary {
@@ -332,8 +580,30 @@ input[type="number"] {
     @apply w-full bg-background border border-border rounded-xl px-4 py-2.5 text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-primary transition-all duration-150;
   }
 
+  /* Fix browser autofill white background */
+  .input-field:-webkit-autofill,
+  .input-field:-webkit-autofill:hover,
+  .input-field:-webkit-autofill:focus,
+  .input-field:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--surface-1) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    caret-color: var(--text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+  .dark .input-field:-webkit-autofill,
+  .dark .input-field:-webkit-autofill:hover,
+  .dark .input-field:-webkit-autofill:focus,
+  .dark .input-field:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--background) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    caret-color: var(--text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
   .page-container {
-    @apply w-full max-w-md md:max-w-4xl mx-auto px-4 pb-8 pt-4;
+    @apply w-full max-w-md md:max-w-4xl mx-auto px-4 pt-4;
+    /* Extra bottom clearance so content scrolls clear of the floating nav */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 104px);
   }
 
   .section-title {
@@ -399,6 +669,29 @@ input[type="number"] {
   }
 }
 
+/* ─── Page route transition ──────────────────────────────── */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-transition {
+  animation: pageEnter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+  /* Fill the scroll viewport so full-height pages (e.g. Login) can
+     vertically center their content; taller pages still scroll.
+     min-height (not height) lets content taller than the viewport
+     grow and trigger the parent's scroll instead of being clipped. */
+  min-height: 100%;
+}
+
 @keyframes splash {
   0% {
     transform: translate(-50%, -50%) scale(0.5);
@@ -455,6 +748,22 @@ input[type="number"] {
 
 .animate-slide-in-right {
   animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Full page-push: slides in from the right edge like navigating to a new tab */
+@keyframes panelPushIn {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-panel-push {
+  animation: panelPushIn 0.32s cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+  will-change: transform;
 }
 
 @keyframes slideInLeft {
@@ -642,6 +951,7 @@ input[type="number"] {
   animation: goalPulse 1.4s ease-in-out infinite;
 }
 
+
 @keyframes pop {
   0% { transform: scale(1); }
   50% { transform: scale(1.25); }
@@ -732,9 +1042,17 @@ input[type="number"] {
   width: calc(100vw - 32px);
   max-width: 340px;
   max-height: 60vh;
-  background: white;
+  background:
+    linear-gradient(180deg, var(--lg-sheen), transparent 22%),
+    var(--panel-surface);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--lg-border);
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+  box-shadow:
+    0 16px 48px var(--lg-shadow-strong),
+    inset 0 1px 0 0 var(--lg-hl-top),
+    inset 0 -1px 1px 0 var(--lg-hl-bottom);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -770,80 +1088,95 @@ input[type="number"] {
 /* ─── Meal Icon Animations ──────────────────────────────── */
 .meal-icon {
   display: block;
+  overflow: visible;
+  transform-origin: center bottom;
 }
 
-/* Breakfast: steam rising */
-@keyframes steamRise {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50% { opacity: 0.8; transform: translateY(-3px); }
+/* Springy entrance + gentle hover lift shared by all meal icons */
+@keyframes mealIconPop {
+  0% { opacity: 0; transform: scale(0.4) translateY(4px); }
+  60% { opacity: 1; transform: scale(1.12) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
-.steam-line-1 { animation: steamRise 2s ease-in-out infinite; }
-.steam-line-2 { animation: steamRise 2s ease-in-out 0.3s infinite; }
-.steam-line-3 { animation: steamRise 2s ease-in-out 0.6s infinite; }
+
+/* Soft contact shadow breathes with the float */
+@keyframes mealShadowPulse {
+  0%, 100% { opacity: 0.16; transform: scaleX(1); }
+  50% { opacity: 0.1; transform: scaleX(0.82); }
+}
+.meal-shadow {
+  transform-origin: center;
+  animation: mealShadowPulse 3s ease-in-out infinite;
+}
+
+/* Steam rising (breakfast + lunch) */
+@keyframes steamRise {
+  0% { opacity: 0; transform: translateY(2px) scaleY(0.85); }
+  50% { opacity: 0.9; transform: translateY(-2px) scaleY(1); }
+  100% { opacity: 0; transform: translateY(-5px) scaleY(0.85); }
+}
+.steam-line-1 { transform-origin: bottom; animation: steamRise 2.2s ease-in-out infinite; }
+.steam-line-2 { transform-origin: bottom; animation: steamRise 2.2s ease-in-out 0.35s infinite; }
+.steam-line-3 { transform-origin: bottom; animation: steamRise 2.2s ease-in-out 0.7s infinite; }
 
 .meal-icon-breakfast {
-  animation: mealIconFloat 3s ease-in-out infinite;
+  animation: mealIconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, mealIconFloat 3s ease-in-out 0.5s infinite;
 }
 
-/* Lunch: gentle bob */
-@keyframes chopstickWiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(2deg); }
-  75% { transform: rotate(-2deg); }
+/* Lunch: floating food bits */
+@keyframes bowlBitBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
 }
-.chopstick-1, .chopstick-2 {
-  transform-origin: center top;
-  animation: chopstickWiggle 3s ease-in-out infinite;
-}
-.chopstick-2 { animation-delay: 0.15s; }
+.bowl-bit-1 { animation: bowlBitBob 2s ease-in-out infinite; }
+.bowl-bit-2 { animation: bowlBitBob 2s ease-in-out 0.3s infinite; }
+.bowl-bit-3 { animation: bowlBitBob 2s ease-in-out 0.6s infinite; }
 
 .meal-icon-lunch {
-  animation: mealIconFloat 3.5s ease-in-out 0.2s infinite;
+  animation: mealIconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both, mealIconFloat 3.5s ease-in-out 0.55s infinite;
 }
 
-/* Snacks: cookie wiggle + chip sparkle */
-@keyframes cookieWiggle {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(-3deg) scale(1.02); }
-  75% { transform: rotate(3deg) scale(1.02); }
+/* Snacks (donut): bouncing + twinkling sprinkles */
+@keyframes sprinklePop {
+  0%, 100% { opacity: 0.85; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
 }
+.sprinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.sprinkle-1 { animation: sprinklePop 1.8s ease-in-out infinite; }
+.sprinkle-2 { animation: sprinklePop 1.8s ease-in-out 0.2s infinite; }
+.sprinkle-3 { animation: sprinklePop 1.8s ease-in-out 0.4s infinite; }
+.sprinkle-4 { animation: sprinklePop 1.8s ease-in-out 0.6s infinite; }
+.sprinkle-5 { animation: sprinklePop 1.8s ease-in-out 0.8s infinite; }
+
 .meal-icon-snacks {
-  animation: cookieWiggle 2.5s ease-in-out infinite;
+  animation: mealIconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both, mealIconFloat 3.2s ease-in-out 0.6s infinite;
 }
 
-@keyframes chipSparkle {
-  0%, 100% { opacity: 0.9; r: 2; }
-  50% { opacity: 1; r: 2.4; }
-}
-.chip-1 { animation: chipSparkle 1.8s ease-in-out infinite; }
-.chip-2 { animation: chipSparkle 1.8s ease-in-out 0.2s infinite; }
-.chip-3 { animation: chipSparkle 1.8s ease-in-out 0.4s infinite; }
-.chip-4 { animation: chipSparkle 1.8s ease-in-out 0.6s infinite; }
-.chip-5 { animation: chipSparkle 1.8s ease-in-out 0.8s infinite; }
-
-@keyframes crumbFall {
-  0%, 100% { opacity: 0.4; transform: translateY(0); }
-  50% { opacity: 0.6; transform: translateY(1px); }
-}
-.crumb-1 { animation: crumbFall 2s ease-in-out infinite; }
-.crumb-2 { animation: crumbFall 2s ease-in-out 0.5s infinite; }
-
-/* Dinner: moon glow + star twinkle */
+/* Dinner: moon glow + star twinkle + dome shimmer */
 @keyframes moonGlow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.85; }
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 .moon-accent { animation: moonGlow 3s ease-in-out infinite; }
 
 @keyframes starTwinkle {
-  0%, 100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 0.7; transform: scale(1.3); }
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1.3); }
 }
-.star-1 { animation: starTwinkle 2s ease-in-out infinite; }
-.star-2 { animation: starTwinkle 2s ease-in-out 0.7s infinite; }
+.star-1 { transform-box: fill-box; transform-origin: center; animation: starTwinkle 2s ease-in-out infinite; }
+.star-2 { transform-box: fill-box; transform-origin: center; animation: starTwinkle 2s ease-in-out 0.7s infinite; }
+
+@keyframes domeShine {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.75; }
+}
+.dome-shine { animation: domeShine 2.6s ease-in-out infinite; }
 
 .meal-icon-dinner {
-  animation: mealIconFloat 4s ease-in-out 0.4s infinite;
+  animation: mealIconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both, mealIconFloat 4s ease-in-out 0.65s infinite;
 }
 
 /* Shared gentle float for all meal icons */
@@ -1008,4 +1341,178 @@ mark.search-highlight {
   border-radius: 3px;
   padding: 0 2px;
   font-weight: inherit;
+}
+/* ─── Image Crop Modal (mobile-framed) ─────────────────────── */
+.image-crop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-modal-overlay);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  animation: cropOverlayIn 0.2s ease-out;
+}
+
+@keyframes cropOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fills the viewport on mobile, matches the 420×860 phone frame on desktop.
+   Light, tinted liquid glass — same green wash as the profile avatar / hero card. */
+.image-crop-panel {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(34, 197, 94, 0.18) 0%, rgba(34, 197, 94, 0.08) 55%, rgba(34, 197, 94, 0.14) 100%),
+    var(--bg-page);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid var(--green-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: cropPanelIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes cropPanelIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (min-width: 768px) {
+  .image-crop-panel {
+    width: 420px;
+    height: 860px;
+    max-height: calc(100vh - 32px);
+    border-radius: 32px;
+    box-shadow:
+      0 25px 60px -12px rgba(34, 197, 94, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Crop stage — soft green-tinted light surface behind the photo */
+.image-crop-stage {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(34, 197, 94, 0.1), transparent 70%),
+    var(--green-subtle);
+}
+
+.image-crop-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(34, 197, 94, 0.06));
+  border-bottom: 1px solid var(--green-border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.image-crop-footer {
+  flex-shrink: 0;
+  padding: 14px 16px 16px;
+  background: linear-gradient(0deg, rgba(34, 197, 94, 0.16), rgba(34, 197, 94, 0.06));
+  border-top: 1px solid var(--green-border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Small glassy text buttons in the header (Reset / Rotate) — glass-green */
+.image-crop-text-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0.08));
+  border: 1px solid var(--green-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--green-primary);
+  transition: all 0.18s ease;
+}
+.image-crop-text-btn:active {
+  transform: scale(0.94);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.26), rgba(34, 197, 94, 0.13));
+}
+
+.image-crop-zoom-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0.08));
+  border: 1px solid var(--green-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--green-primary);
+  transition: all 0.18s ease;
+}
+.image-crop-zoom-btn:active {
+  transform: scale(0.9);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.26), rgba(34, 197, 94, 0.13));
+}
+
+/* Smaller action buttons */
+.image-crop-action {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.image-crop-action:active {
+  transform: scale(0.97);
+}
+
+/* Glassy zoom slider — green fill on light track */
+.image-crop-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    rgba(34, 197, 94, 0.85) var(--fill, 0%),
+    rgba(34, 197, 94, 0.16) var(--fill, 0%)
+  );
+}
+.image-crop-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--green-primary);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+  cursor: pointer;
+}
+.image-crop-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--green-primary);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+  cursor: pointer;
 }

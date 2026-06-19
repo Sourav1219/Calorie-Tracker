@@ -1,14 +1,8 @@
 const UserActivity = require("../models/UserActivity");
 const DailyLog = require("../models/DailyLog");
 const User = require("../models/User");
-
-// Helper: Format date as YYYY-MM-DD
-function formatDateKey(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+const { sendPushToUser } = require("../utils/pushSender");
+const { formatDateKey } = require("../utils/dailyLog");
 
 // Helper: Calculate streak
 async function calculateStreak(userId) {
@@ -113,8 +107,6 @@ exports.updateUserActivity = async (req, res) => {
     activity.weeklyAverageProtein = averages.protein;
 
     // Check for achievements
-    const user = await User.findById(userId);
-    
     // First log achievement
     if (activity.totalDaysLogged === 1 && !activity.achievements.find(a => a.type === 'first_log')) {
       activity.achievements.push({ type: 'first_log', unlockedAt: new Date() });
@@ -131,6 +123,52 @@ exports.updateUserActivity = async (req, res) => {
     }
 
     await activity.save();
+
+    // ── Fire real push notifications for key events ──────────────────
+    try {
+      const freshUser = await User.findById(userId);
+      if (freshUser && freshUser.pushSubscriptions?.length > 0) {
+        const today = formatDateKey(new Date());
+        const todayLog = await DailyLog.findOne({ userId, date: today });
+        const goalCal = freshUser.dailyCalorieGoal || 2000;
+        const currentCal = todayLog?.totalCalories || 0;
+
+        // Achievement unlocked this save
+        const newAchievements = activity.achievements.filter((a) => {
+          const unlockedMs = new Date(a.unlockedAt).getTime();
+          return Date.now() - unlockedMs < 30 * 1000; // within last 30s
+        });
+        for (const ach of newAchievements) {
+          const labels = {
+            first_log: { title: "First log! 🎉", body: "You've logged your first meal. Great start!" },
+            week_streak: { title: "7-day streak! 🔥", body: "One week of consistent tracking. Keep it up!" },
+            month_streak: { title: "30-day streak! 🏆", body: "One month of tracking. You're unstoppable!" },
+          };
+          const lbl = labels[ach.type];
+          if (lbl) {
+            await sendPushToUser(freshUser, { title: lbl.title, body: lbl.body, tag: ach.type, url: "/dashboard" });
+          }
+        }
+
+        // Goal reached (within 100 kcal buffer, not over by more than 10%)
+        if (currentCal >= goalCal && currentCal < goalCal * 1.1) {
+          const lastGoalPush = activity.lastGoalPushSent;
+          const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+          if (!lastGoalPush || new Date(lastGoalPush).getTime() < oneDayAgo) {
+            await sendPushToUser(freshUser, {
+              title: "Daily goal reached! 🎯",
+              body: `You hit your ${goalCal} kcal goal today. Great work!`,
+              tag: "goal_reached",
+              url: "/dashboard",
+            });
+            activity.lastGoalPushSent = new Date();
+            await activity.save();
+          }
+        }
+      }
+    } catch (pushErr) {
+      console.error("Push send error in updateUserActivity:", pushErr);
+    }
 
     res.json({ success: true, activity });
   } catch (error) {
@@ -313,6 +351,61 @@ exports.getSmartNotifications = async (req, res) => {
   } catch (error) {
     console.error("Error generating notifications:", error);
     res.status(500).json({ error: "Failed to generate notifications" });
+  }
+};
+
+// Return the VAPID public key so the client can subscribe
+exports.getVapidPublicKey = (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+};
+
+// Save a push subscription for the authenticated user
+exports.subscribePush = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const subscription = req.body; // { endpoint, keys: { p256dh, auth } }
+
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ error: "Invalid subscription object" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Avoid duplicates
+    const already = user.pushSubscriptions.some(
+      (s) => s.endpoint === subscription.endpoint
+    );
+    if (!already) {
+      user.pushSubscriptions.push(subscription);
+      await user.save();
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("subscribePush error:", err);
+    res.status(500).json({ error: "Failed to save subscription" });
+  }
+};
+
+// Remove a push subscription (user unsubscribed or revoked permission)
+exports.unsubscribePush = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { endpoint } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.pushSubscriptions = user.pushSubscriptions.filter(
+      (s) => s.endpoint !== endpoint
+    );
+    await user.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("unsubscribePush error:", err);
+    res.status(500).json({ error: "Failed to remove subscription" });
   }
 };
 

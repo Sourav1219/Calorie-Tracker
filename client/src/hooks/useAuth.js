@@ -5,11 +5,10 @@ import { useUser } from "../context/UserContext";
  * Wraps UserContext for convenience.
  */
 export default function useAuth() {
-  const { user, token, isLoggedIn, isLoading, login, logout, updateUser } = useUser();
+  const { user, isLoggedIn, isLoading, login, logout, updateUser } = useUser();
 
   return {
     user,
-    token,
     isLoggedIn,
     isLoading,
     login,

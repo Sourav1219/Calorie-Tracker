@@ -34,13 +34,14 @@ export default function MealSection({ mealType = "breakfast", items = [], onAdd 
       </div>
 
       {items.length > 0 ? (
-        <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface-3)" }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: "var(--lg-tint)", border: "1px solid var(--lg-border)" }}>
           {items.map((item, i) => (
             <div
               key={i}
-              className="flex justify-between items-center py-2.5 px-3"
+              className="flex justify-between items-center py-2.5 px-3 animate-fade-up"
               style={{
                 borderTop: i > 0 ? "1px solid var(--divider)" : "none",
+                animationDelay: `${i * 45}ms`,
               }}
             >
               <div>

@@ -160,6 +160,9 @@ async function createMeal(req, res) {
 		if (!Number.isFinite(normalizedQuantity) || normalizedQuantity <= 0) {
 			return res.status(400).json({ error: "quantity must be a positive number" });
 		}
+		if (normalizedQuantity > 10000) {
+			return res.status(400).json({ error: "quantity is too large" });
+		}
 
 		const foodItem = await FoodItem.findById(foodItemId);
 		if (!foodItem) {

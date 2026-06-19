@@ -13,13 +13,13 @@ const DEFAULT_SECTIONS = [
 async function getSections(req, res) {
   try {
     const userId = req.user.userId;
-    let sections = await MealSection.find({ userId }).sort({ name: 1 });
+    let sections = await MealSection.find({ userId }).sort({ sortOrder: 1, createdAt: 1 });
 
     // For existing users who don't have seeded sections
     if (sections.length === 0) {
       const toInsert = DEFAULT_SECTIONS.map(s => ({ ...s, userId }));
       const inserted = await MealSection.insertMany(toInsert);
-      sections = inserted.sort((a, b) => a.name.localeCompare(b.name));
+      sections = inserted.sort((a, b) => a.sortOrder - b.sortOrder);
 
       // Migrate existing meal entries safely for this user only
       const DailyLog = require("../models/DailyLog");

@@ -7,7 +7,8 @@ const { toSectionCategory } = require("../utils/foodCatalog");
 
 function monthRange(year, month) {
 	const start = `${year}-${String(month).padStart(2, "0")}-01`;
-	const end = `${year}-${String(month).padStart(2, "0")}-31`;
+	const lastDay = new Date(year, month, 0).getDate();
+	const end = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 	return { start, end };
 }
 

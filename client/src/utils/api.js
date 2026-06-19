@@ -2,38 +2,29 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL 
-    ? `${import.meta.env.VITE_API_URL}/api` 
+  baseURL: import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
     : "/api",
   headers: {
     "Content-Type": "application/json",
   },
+  // Send/receive the httpOnly auth cookie on every request.
+  withCredentials: true,
 });
 
-// Helper to get local date in YYYY-MM-DD format
-export const getLocalDateKey = (date = new Date()) => {
-  const d = new Date(date);
-  // Force Asia/Kolkata (IST)
-  const istStr = d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  const istDate = new Date(istStr);
-  
-  const year = istDate.getFullYear();
-  const month = String(istDate.getMonth() + 1).padStart(2, "0");
-  const day = String(istDate.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+// Date key in YYYY-MM-DD. Pinned to Asia/Kolkata so the client's notion of
+// "today" matches the server's day boundary (streaks, activity, notifications
+// are all computed in IST). en-CA formats as YYYY-MM-DD.
+export const getLocalDateKey = (date = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(date));
 
-// Request interceptor — attach JWT token to every request
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Auth now travels in an httpOnly cookie (withCredentials), so there's no
+// token to attach from JS. No request interceptor needed.
 
 // Response interceptor — handle 401 errors globally
 api.interceptors.response.use(
@@ -41,20 +32,20 @@ api.interceptors.response.use(
   (error) => {
     // Check if this is a notification API call (don't show toast for these)
     const isNotificationAPI = error.config?.url?.includes('/notifications');
-    
+
     if (!error.response && error.request && !isNotificationAPI) {
       toast.error("Check your internet connection");
     }
 
     if (error.response && error.response.status === 401) {
-      // Clear stored credentials from both storages
-      localStorage.removeItem("token");
+      // Session expired/invalid — drop the cached profile and bounce to login.
+      // (The cookie itself is httpOnly; the server clears it on logout.)
       localStorage.removeItem("user");
-      sessionStorage.removeItem("token");
       sessionStorage.removeItem("user");
 
-      // Redirect to login (if not already there)
-      if (window.location.pathname !== "/login") {
+      // Avoid a redirect loop on the auth-check call itself.
+      const isAuthCheck = error.config?.url?.includes("/auth/me");
+      if (!isAuthCheck && window.location.pathname !== "/login") {
         window.location.href = "/login?expired=true";
       }
     }
@@ -70,19 +61,11 @@ api.interceptors.response.use(
   }
 );
 
-const searchCache = new Map();
-
 export const foodAPI = {
   search: async (q = "", category = null) => {
-    const key = `${q}|${category || ""}`;
-    if (searchCache.has(key)) {
-      return Promise.resolve({ data: searchCache.get(key) });
-    }
     const params = { q };
     if (category) params.category = category;
-    const res = await api.get("/food/search", { params });
-    searchCache.set(key, res.data);
-    return res;
+    return api.get("/food/search", { params });
   },
   getById: (id) => api.get(`/food/${id}`),
   create: (foodData) => api.post("/food", foodData),
@@ -127,6 +110,11 @@ export const adminAPI = {
 };
 
 export const authAPI = {
+  login: (credentials) => api.post("/auth/login", credentials),
+  register: (payload) => api.post("/auth/register", payload),
+  googleLogin: (credential) => api.post("/auth/google", { credential }),
+  logout: () => api.post("/auth/logout"),
+  me: () => api.get("/auth/me"),
   updateProfile: (payload) => api.patch("/auth/me", payload),
 };
 
@@ -142,6 +130,9 @@ export const notificationsAPI = {
   getSmartNotifications: () => api.get("/notifications/smart"),
   updateActivity: () => api.post("/notifications/update-activity"),
   markShown: (type) => api.post("/notifications/mark-shown", { type }),
+  getVapidPublicKey: () => api.get("/notifications/push/vapid-key"),
+  subscribePush: (subscription) => api.post("/notifications/push/subscribe", subscription),
+  unsubscribePush: (endpoint) => api.post("/notifications/push/unsubscribe", { endpoint }),
 };
 
 export default api;

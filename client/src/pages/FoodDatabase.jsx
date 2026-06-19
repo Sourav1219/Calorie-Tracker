@@ -160,7 +160,7 @@ export default function FoodDatabase() {
           className="px-4 pt-6 pb-4 sticky top-0 z-30"
           style={{
             background: "var(--bg-page)",
-            borderBottom: "1px solid var(--border-default)",
+            borderBottom: "1px solid var(--lg-border)",
           }}
         >
           <div className="flex items-center justify-between mb-4">
@@ -215,7 +215,7 @@ export default function FoodDatabase() {
                   lastAction.current = "search";
                   setSearchQuery("");
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors no-spring"
                 style={{ color: "var(--text-muted)" }}
               >
                 <X className="w-4 h-4" />
@@ -224,39 +224,34 @@ export default function FoodDatabase() {
           </div>
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 hide-scrollbar">
-            <button
-              id="cat-all"
-              onClick={() => {
-                lastAction.current = "tab";
-                setSelectedCategory(null);
-              }}
-              className="filter-chip flex-shrink-0 w-[110px] px-2 py-1.5 rounded-full text-sm font-medium border truncate"
-              style={{
-                background: selectedCategory === null ? "var(--green-primary)" : "var(--surface-3)",
-                color: selectedCategory === null ? "var(--text-on-green)" : "var(--text-secondary)",
-                borderColor: selectedCategory === null ? "transparent" : "var(--border-default)",
-              }}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                id={`cat-${cat.replace(/\s+/g, '-')}`}
-                onClick={() => {
-                  lastAction.current = "tab";
-                  setSelectedCategory(cat);
-                }}
-                className="filter-chip flex-shrink-0 w-[110px] px-2 py-1.5 rounded-full text-sm font-medium border truncate"
-                style={{
-                  background: selectedCategory === cat ? "var(--green-primary)" : "var(--surface-3)",
-                  color: selectedCategory === cat ? "var(--text-on-green)" : "var(--text-secondary)",
-                  borderColor: selectedCategory === cat ? "transparent" : "var(--border-default)",
-                }}
-              >
-                {cat}
-              </button>
-            ))}
+            {[{ label: "All", value: null }, ...categories.map(c => ({ label: c, value: c }))].map((item) => {
+              const isActive = selectedCategory === item.value;
+              return (
+                <button
+                  key={item.value ?? "__all__"}
+                  id={item.value ? `cat-${item.value.replace(/\s+/g, '-')}` : "cat-all"}
+                  onClick={() => {
+                    lastAction.current = "tab";
+                    setSelectedCategory(item.value);
+                  }}
+                  className="filter-chip flex-shrink-0 w-[110px] px-2 py-1.5 rounded-full text-sm font-bold border truncate transition-all duration-150 active:scale-95"
+                  style={{
+                    background: isActive
+                      ? "linear-gradient(180deg, rgba(34,197,94,0.28), rgba(34,197,94,0.14))"
+                      : "var(--tab-inactive-bg)",
+                    color: isActive ? "var(--green-primary)" : "var(--tab-inactive-color)",
+                    borderColor: isActive ? "rgba(34,197,94,0.40)" : "var(--tab-inactive-border)",
+                    boxShadow: isActive
+                      ? "inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 10px rgba(34,197,94,0.18)"
+                      : "var(--tab-inactive-shadow)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -276,11 +271,11 @@ export default function FoodDatabase() {
               ))}
             </div>
           ) : (
-            <div className="card text-center py-12 px-4 animate-fade-in" style={{ borderStyle: "dashed", borderColor: "var(--border-default)" }}>
+            <div className="card text-center py-12 px-4 animate-fade-in">
               <div className="flex justify-center mb-4">
                 <div
                   className="w-14 h-14 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--surface-3)" }}
+                  style={{ background: "var(--lg-tint)", border: "1px solid var(--lg-border)", boxShadow: "inset 0 1px 0 var(--lg-hl-top)" }}
                 >
                   <SearchX className="w-6 h-6" style={{ color: "var(--text-muted)" }} />
                 </div>

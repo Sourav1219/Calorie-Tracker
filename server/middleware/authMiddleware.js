@@ -6,7 +6,10 @@ const jwt = require("jsonwebtoken");
  * Returns 401 if token is missing or invalid.
  */
 const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  // Prefer the httpOnly cookie; fall back to the Authorization header
+  // (keeps API tools / any legacy Bearer clients working).
+  const token =
+    req.cookies?.token || req.headers.authorization?.split(" ")[1];
 
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 

@@ -1,66 +1,61 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import api from "../utils/api";
+import api, { authAPI } from "../utils/api";
 
 const UserContext = createContext(null);
 
 /* ─── Storage helpers ────────────────────────────────────── */
-const TOKEN_KEY = "token";
+// NOTE: the auth token is NOT stored here — it lives in an httpOnly cookie
+// that JavaScript can't read (protects against XSS token theft). We only
+// cache the non-sensitive user profile so the UI can render instantly on load.
 const USER_KEY = "user";
 
-/**
- * Try to read a value from localStorage first, then sessionStorage.
- * This lets us transparently restore sessions regardless of where the
- * token was originally persisted (remember-me vs session-only).
- */
-function getStored(key) {
-  return localStorage.getItem(key) || sessionStorage.getItem(key);
+function getStoredUser() {
+  const raw = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
-/** Remove a key from both storages so logout is always clean. */
-function removeStored(key) {
-  localStorage.removeItem(key);
-  sessionStorage.removeItem(key);
+function storeUser(userData, rememberMe = true) {
+  const storage = rememberMe ? localStorage : sessionStorage;
+  const other = rememberMe ? sessionStorage : localStorage;
+  other.removeItem(USER_KEY);
+  storage.setItem(USER_KEY, JSON.stringify(userData));
+}
+
+function clearStoredUser() {
+  localStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(USER_KEY);
 }
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isLoggedIn = !!user && !!token;
+  const isLoggedIn = !!user;
 
-  // Restore session on app load
+  // Restore session on app load — the cookie is sent automatically.
   useEffect(() => {
     const restoreSession = async () => {
+      // Optimistically render the cached profile (if any) for an instant UI.
+      const cached = getStoredUser();
+      if (cached) setUser(cached);
+
       try {
-        const savedToken = getStored(TOKEN_KEY);
-        const savedUser = getStored(USER_KEY);
-
-        if (savedToken && savedUser) {
-          setToken(savedToken);
-          setUser(JSON.parse(savedUser));
-
-          // Verify token is still valid
-          try {
-            const res = await api.get("/auth/me");
-            if (res.data.user) {
-              setUser(res.data.user);
-              // Persist refreshed user data to whichever storage has the token
-              const storage = localStorage.getItem(TOKEN_KEY)
-                ? localStorage
-                : sessionStorage;
-              storage.setItem(USER_KEY, JSON.stringify(res.data.user));
-            }
-          } catch {
-            // Token expired or invalid — clear session
-            removeStored(TOKEN_KEY);
-            removeStored(USER_KEY);
-            setUser(null);
-            setToken(null);
-          }
+        const res = await api.get("/auth/me");
+        if (res.data.user) {
+          setUser(res.data.user);
+          // Refresh the cache wherever it already lives (default localStorage).
+          const rememberMe = !!localStorage.getItem(USER_KEY) || !cached;
+          storeUser(res.data.user, rememberMe);
         }
       } catch {
-        // Silently fail
+        // No valid cookie → not logged in. Clear any stale cached profile.
+        clearStoredUser();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -70,33 +65,26 @@ export function UserProvider({ children }) {
   }, []);
 
   /**
-   * Persist user session.
+   * Persist the session after a successful login/register.
+   * The server has already set the httpOnly auth cookie; here we only
+   * cache the profile for instant rendering.
    * @param {object} userData - User profile object
-   * @param {string} jwtToken - JWT token string
-   * @param {boolean} [rememberMe=true] - If true, persist in localStorage;
-   *   if false, use sessionStorage (cleared when browser is closed).
+   * @param {boolean} [rememberMe=true] - localStorage (persist) vs sessionStorage.
    */
-  const login = (userData, jwtToken, rememberMe = true) => {
+  const login = (userData, rememberMe = true) => {
     setUser(userData);
-    setToken(jwtToken);
-
-    const storage = rememberMe ? localStorage : sessionStorage;
-    // Clear the other storage to avoid stale data
-    const otherStorage = rememberMe ? sessionStorage : localStorage;
-    otherStorage.removeItem(TOKEN_KEY);
-    otherStorage.removeItem(USER_KEY);
-
-    storage.setItem(TOKEN_KEY, jwtToken);
-    storage.setItem(USER_KEY, JSON.stringify(userData));
+    storeUser(userData, rememberMe);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authAPI.logout(); // clears the httpOnly cookie server-side
+    } catch {
+      // Even if the request fails, clear local state.
+    }
     setUser(null);
-    setToken(null);
-    removeStored(TOKEN_KEY);
-    removeStored(USER_KEY);
+    clearStoredUser();
 
-    // Redirect to login page
     if (window.location.pathname !== "/login") {
       window.location.href = "/login";
     }
@@ -105,15 +93,13 @@ export function UserProvider({ children }) {
   const updateUser = (updatedData) => {
     const newUser = { ...user, ...updatedData };
     setUser(newUser);
-    // Update whichever storage currently holds the data
-    const storage = localStorage.getItem(TOKEN_KEY)
-      ? localStorage
-      : sessionStorage;
-    storage.setItem(USER_KEY, JSON.stringify(newUser));
+    // Keep the cache in whichever storage currently holds it.
+    const rememberMe = !!localStorage.getItem(USER_KEY);
+    storeUser(newUser, rememberMe);
   };
 
   return (
-    <UserContext.Provider value={{ user, token, isLoggedIn, isLoading, login, logout, updateUser }}>
+    <UserContext.Provider value={{ user, isLoggedIn, isLoading, login, logout, updateUser }}>
       {children}
     </UserContext.Provider>
   );

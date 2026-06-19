@@ -19,10 +19,10 @@ router.get("/test", (req, res) => {
 });
 
 // GET /api/food/search?q=...&category=...
-router.get("/search", publicFoodCache, searchFood);
+router.get("/search", searchFood);
 
 // GET /api/food/categories
-router.get("/categories", publicFoodCache, getCategories);
+router.get("/categories", getCategories);
 
 // POST /api/food/bulk/analyze  (admin only)
 router.post("/bulk/analyze", authMiddleware, adminMiddleware, analyzeBulkFoods);

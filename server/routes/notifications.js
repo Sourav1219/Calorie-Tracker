@@ -12,4 +12,9 @@ router.post("/update-activity", authMiddleware, notificationController.updateUse
 // Mark notification as shown
 router.post("/mark-shown", authMiddleware, notificationController.markNotificationShown);
 
+// PWA Push Notification endpoints
+router.get("/push/vapid-key", notificationController.getVapidPublicKey);
+router.post("/push/subscribe", authMiddleware, notificationController.subscribePush);
+router.post("/push/unsubscribe", authMiddleware, notificationController.unsubscribePush);
+
 module.exports = router;

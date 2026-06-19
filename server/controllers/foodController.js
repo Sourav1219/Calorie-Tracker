@@ -261,6 +261,7 @@ async function searchFood(req, res) {
       payload = payload.filter((food) => food.category === selectedSection);
     }
 
+    res.set("Cache-Control", "no-store");
     return res.status(200).json({ results: payload, count: payload.length });
   } catch (error) {
     console.error("Search food error:", error);
@@ -278,6 +279,7 @@ async function getFoodById(req, res) {
       return res.status(404).json({ error: "Food item not found" });
     }
 
+    res.set("Cache-Control", "no-store");
     return res.status(200).json({ food: toFoodResponse(food) });
   } catch (error) {
     console.error("Get food error:", error);
@@ -310,6 +312,26 @@ async function createFood(req, res) {
 
     if (Number(caloriesPer) <= 0 || Number(servingSize) <= 0) {
       return res.status(400).json({ error: "Invalid nutritional values" });
+    }
+
+    // Reject physically implausible values (and negatives) so a typo or a
+    // tampered request can't poison the catalog.
+    const numericChecks = [
+      { value: caloriesPer, max: 9000, label: "Calories" },
+      { value: servingSize, max: 10000, label: "Serving size" },
+      { value: proteinG, max: 1000, label: "Protein" },
+      { value: carbsG, max: 1000, label: "Carbs" },
+      { value: fatG, max: 1000, label: "Fat" },
+      { value: fibreG, max: 1000, label: "Fibre" },
+      { value: sugarG, max: 1000, label: "Sugar" },
+      { value: sodiumMg, max: 100000, label: "Sodium" },
+    ];
+    for (const { value, max, label } of numericChecks) {
+      if (value === undefined || value === null || value === "") continue;
+      const n = Number(value);
+      if (!Number.isFinite(n) || n < 0 || n > max) {
+        return res.status(400).json({ error: `${label} must be between 0 and ${max}` });
+      }
     }
 
     const normalized = normalizeFoodPayload(

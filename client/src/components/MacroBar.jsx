@@ -1,45 +1,74 @@
+const MACROS = [
+  { key: "carbs", label: "C", name: "Carbs", color: "#52bd8a", glow: "rgba(82,189,138,0.4)" },
+  { key: "protein", label: "P", name: "Protein", color: "#7c93f0", glow: "rgba(124,147,240,0.4)" },
+  { key: "fat", label: "F", name: "Fat", color: "#f0857e", glow: "rgba(240,133,126,0.4)" },
+];
+
+// Vertical gloss overlay on top of the solid macro color → glassy 3D pill.
+function glossy(color) {
+  return `linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 55%), ${color}`;
+}
+
+const fmt = (n) => Number(n).toFixed(1).replace(/\.0$/, "");
+
 export default function MacroBar({ proteinG = 0, carbsG = 0, fatG = 0, size = "sm" }) {
-  const pCal = proteinG * 4;
-  const cCal = carbsG * 4;
-  const fCal = fatG * 9;
-  const totalCal = pCal + cCal + fCal;
+  const grams = {
+    carbs: Number(carbsG) || 0,
+    protein: Number(proteinG) || 0,
+    fat: Number(fatG) || 0,
+  };
+  const cals = { carbs: grams.carbs * 4, protein: grams.protein * 4, fat: grams.fat * 9 };
+  const totalCal = cals.carbs + cals.protein + cals.fat;
 
-  const pPct = totalCal === 0 ? 0 : (pCal / totalCal) * 100;
-  const cPct = totalCal === 0 ? 0 : (cCal / totalCal) * 100;
-  const fPct = totalCal === 0 ? 0 : (fCal / totalCal) * 100;
+  const segments = MACROS.map((m) => ({
+    ...m,
+    g: grams[m.key],
+    pct: totalCal === 0 ? 0 : (cals[m.key] / totalCal) * 100,
+  })).filter((s) => s.pct > 0);
 
+  const barH = size === "sm" ? "h-2" : "h-2.5";
 
+  const bar = (
+    <div
+      className={`relative w-full ${barH} rounded-full`}
+      style={{ background: "var(--bg-subtle)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.08)" }}
+    >
+      <div className="absolute inset-0 flex items-stretch gap-[2px]">
+        {segments.map((s) => (
+          <div
+            key={s.key}
+            className="h-full rounded-full transition-[width] duration-700 ease-out"
+            style={{
+              width: `${s.pct}%`,
+              minWidth: "6px",
+              background: glossy(s.color),
+              boxShadow: `0 0 6px ${s.glow}`,
+            }}
+            title={`${s.name}: ${fmt(s.g)}g`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 
   if (size === "sm") {
-    return (
-      <div className="flex w-full h-1 rounded-full overflow-hidden mt-1.5" style={{ background: "var(--bg-subtle)" }}>
-        <div className="transition-all duration-500" style={{ width: `${cPct}%`, background: "#22c55e" }} title={`Carbs: ${carbsG}g`} />
-        <div className="transition-all duration-500" style={{ width: `${pPct}%`, background: "#3b82f6" }} title={`Protein: ${proteinG}g`} />
-        <div className="transition-all duration-500" style={{ width: `${fPct}%`, background: "#f97316" }} title={`Fat: ${fatG}g`} />
-      </div>
-    );
+    return <div className="mt-1.5">{bar}</div>;
   }
 
   return (
-    <div className="flex flex-col gap-1.5 mt-2 w-full">
-      <div className="flex w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-subtle)" }}>
-        <div className="transition-all duration-500" style={{ width: `${cPct}%`, background: "#22c55e" }} title={`Carbs: ${carbsG}g`} />
-        <div className="transition-all duration-500" style={{ width: `${pPct}%`, background: "#3b82f6" }} title={`Protein: ${proteinG}g`} />
-        <div className="transition-all duration-500" style={{ width: `${fPct}%`, background: "#f97316" }} title={`Fat: ${fatG}g`} />
-      </div>
-      <div className="flex gap-3 text-[11px] md:text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#22c55e" }} />
-          C: {Number(carbsG).toFixed(1).replace(/\.0$/, "")}g
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#3b82f6" }} />
-          P: {Number(proteinG).toFixed(1).replace(/\.0$/, "")}g
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: "#f97316" }} />
-          F: {Number(fatG).toFixed(1).replace(/\.0$/, "")}g
-        </span>
+    <div className="flex flex-col gap-2.5 mt-2 w-full">
+      {bar}
+      <div className="flex flex-wrap gap-2">
+        {MACROS.map((m) => (
+          <span
+            key={m.key}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] md:text-xs font-bold"
+            style={{ background: `${m.color}1a`, color: m.color }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: m.color }} />
+            {m.label} {fmt(grams[m.key])}g
+          </span>
+        ))}
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
-const CACHE_NAME = 'pureintake-cache-v1';
-const FOOD_API_CACHE = 'pureintake-food-api-v1';
+const CACHE_NAME = 'pureintake-cache-v3';
 
 const urlsToCache = [
   '/',
@@ -17,42 +16,70 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME && cacheName !== FOOD_API_CACHE) {
-            return caches.delete(cacheName);
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(name => {
+          if (name !== CACHE_NAME) {
+            return caches.delete(name);
           }
         })
-      );
-    })
+      )
+    )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Cache Food Database API calls
-  if (url.pathname.includes('/api/food/')) {
-    event.respondWith(
-      caches.open(FOOD_API_CACHE).then(cache => {
-        return fetch(event.request).then(response => {
-          if (response.status === 200) {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        }).catch(() => {
-          // If offline, try to get from cache
-          return cache.match(event.request);
-        });
-      })
-    );
-    return;
-  }
-
-  // Network first, fallback to cache for other requests
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
+  );
+});
+
+// ── Push Notifications ────────────────────────────────────────────────────────
+
+self.addEventListener('push', event => {
+  let data = { title: 'PureIntake', body: 'You have a new notification.', url: '/' };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch (_) {}
+
+  const options = {
+    body: data.body,
+    icon: '/icon.svg',
+    badge: '/icon.svg',
+    tag: data.tag || 'pureintake',
+    renotify: true,
+    data: { url: data.url || '/' },
+    vibrate: [120, 60, 120],
+    actions: [
+      { action: 'open', title: 'Open App' },
+      { action: 'dismiss', title: 'Dismiss' },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // Focus existing tab if the app is already open
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      // Otherwise open a new tab
+      if (clients.openWindow) return clients.openWindow(targetUrl);
+    })
   );
 });

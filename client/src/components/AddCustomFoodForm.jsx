@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { foodAPI } from "../utils/api";
@@ -76,11 +77,15 @@ export default function AddCustomFoodForm({ onClose, onSuccess }) {
 
     if (!formData.name || formData.name.trim().length < 2) return toast.error("Food name must be at least 2 characters.");
     if (!formData.caloriesPer || formData.caloriesPer <= 0) return toast.error("Calories per serving must be greater than 0.");
+    if (formData.caloriesPer > 9000) return toast.error("Calories per serving looks too high (max 9000).");
     if (!formData.servingSize || formData.servingSize <= 0) return toast.error("Serving size must be greater than 0.");
+    if (formData.servingSize > 10000) return toast.error("Serving size looks too high (max 10000).");
 
-    const macroFields = ["proteinG", "carbsG", "fatG", "fibreG", "sugarG", "sodiumMg"];
-    for (const field of macroFields) {
-      if (formData[field] < 0) return toast.error("Nutritional values cannot be negative.");
+    const macroCaps = { proteinG: 1000, carbsG: 1000, fatG: 1000, fibreG: 1000, sugarG: 1000, sodiumMg: 100000 };
+    for (const [field, max] of Object.entries(macroCaps)) {
+      const v = Number(formData[field]) || 0;
+      if (v < 0) return toast.error("Nutritional values cannot be negative.");
+      if (v > max) return toast.error(`${field.replace(/G$|Mg$/, "")} value looks too high (max ${max}).`);
     }
 
     setIsLoading(true);
@@ -105,13 +110,13 @@ export default function AddCustomFoodForm({ onClose, onSuccess }) {
     fontSize: "12px",
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "var(--bg-modal-overlay)" }}>
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 py-4 sm:px-5 glass-overlay" style={{ background: "var(--bg-modal-overlay)" }}>
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col animate-slide-up" style={{ background: "var(--surface-modal)", boxShadow: "var(--shadow-modal)" }}>
-        <div className="flex items-center justify-between p-4 sticky top-0 z-10 rounded-t-2xl" style={{ borderBottom: "1px solid var(--border-default)", background: "var(--surface-modal)" }}>
+      <div className="relative w-full max-w-md rounded-2xl max-h-[min(90dvh,calc(100dvh-80px))] flex flex-col animate-slide-up glass-surface" style={{ boxShadow: "var(--shadow-modal)" }}>
+        <div className="flex items-center justify-between p-4 sticky top-0 z-10 rounded-t-2xl" style={{ borderBottom: "1px solid var(--border-glass)", background: "var(--surface-glass)" }}>
           <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Add Custom Food</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: "var(--lg-tint)", border: "1px solid var(--lg-border)", boxShadow: "inset 0 1px 0 var(--lg-hl-top)", color: "var(--text-muted)" }}>
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -130,12 +135,12 @@ export default function AddCustomFoodForm({ onClose, onSuccess }) {
             <div className="space-y-3">
               <p style={sectionHeadingStyle}>Serving</p>
               <div className="grid grid-cols-2 gap-3">
-                <input type="number" name="servingSize" value={formData.servingSize} onChange={handleChange} min="0.1" step="0.1" required className="input-field" />
+                <input type="number" name="servingSize" value={formData.servingSize} onChange={handleChange} min="0.1" max="10000" step="0.1" required className="input-field" />
                 <select name="servingUnit" value={formData.servingUnit} onChange={handleChange} className="input-field">
                   {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
-              <input type="number" name="caloriesPer" value={formData.caloriesPer} onChange={handleChange} min="1" required placeholder="Calories per serving" className="input-field" />
+              <input type="number" name="caloriesPer" value={formData.caloriesPer} onChange={handleChange} min="1" max="9000" required placeholder="Calories per serving" className="input-field" />
             </div>
 
             <div className="space-y-3">
@@ -174,7 +179,7 @@ export default function AddCustomFoodForm({ onClose, onSuccess }) {
           )}
         </div>
 
-        <div className="p-4 absolute bottom-0 left-0 right-0 rounded-b-2xl" style={{ borderTop: "1px solid var(--border-default)", background: "var(--surface-modal)" }}>
+        <div className="p-4 absolute bottom-0 left-0 right-0 rounded-b-2xl" style={{ borderTop: "1px solid var(--lg-border)", background: "var(--surface-glass)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
           <button
             type="submit"
             form="add-food-form"
@@ -197,6 +202,7 @@ export default function AddCustomFoodForm({ onClose, onSuccess }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

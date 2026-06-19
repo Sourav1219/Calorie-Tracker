@@ -50,6 +50,9 @@ async function createWaterEntry(req, res) {
 		if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
 			return res.status(400).json({ error: "amountMl must be a positive number" });
 		}
+		if (normalizedAmount > 5000) {
+			return res.status(400).json({ error: "amountMl is too large (max 5000 per entry)" });
+		}
 
 		const dailyLog = await ensureDailyLog(userId, date || formatDateKey());
 		const entry = await WaterEntry.create({

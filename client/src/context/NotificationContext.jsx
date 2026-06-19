@@ -75,7 +75,10 @@ export function NotificationProvider({ children }) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (id) => {
+    let notifType = null;
     setNotifications(prev => {
+      const found = prev.find(n => n.id === id);
+      notifType = found?.type ?? null;
       const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
       if (user) {
         localStorage.setItem(`notifications_${user.id}`, JSON.stringify(updated));
@@ -83,10 +86,8 @@ export function NotificationProvider({ children }) {
       return updated;
     });
 
-    // Mark notification as shown on backend
-    const notification = notifications.find(n => n.id === id);
-    if (notification) {
-      notificationsAPI.markShown(notification.type).catch(err => 
+    if (notifType) {
+      notificationsAPI.markShown(notifType).catch(err =>
         console.error("Failed to mark notification as shown:", err)
       );
     }

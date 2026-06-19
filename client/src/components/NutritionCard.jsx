@@ -22,7 +22,7 @@ export default function FoodCard({ food, onSelect, searchQuery = "", index = 0 }
       onClick={() => onSelect(food)}
       className="food-card-cascade food-card-hover card p-4 flex justify-between items-center cursor-pointer active:scale-[0.99] border-l-[4px]"
       style={{
-        borderColor: "var(--border-default)",
+        borderColor: "var(--lg-border)",
         borderLeftColor: "var(--green-primary)",
         animationDelay: `${index * 50}ms`,
       }}

@@ -1,61 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Droplets, Minus, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUser } from "../context/UserContext";
 import { waterAPI } from "../utils/api";
+import AnimatedNumber from "../components/AnimatedNumber";
 
 export default function WaterTracker() {
   const { user } = useUser();
   const [totalWater, setTotalWater] = useState(0);
-  const [displayWater, setDisplayWater] = useState(0);
   const [entries, setEntries] = useState([]);
   const [customAmount, setCustomAmount] = useState(100);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Animation states
   const [deletingIds, setDeletingIds] = useState([]);
   const [particles, setParticles] = useState([]);
-  const animStartRef = useRef(0);
-  const animFrameRef = useRef(null);
 
   const waterGoal = user?.dailyWaterGoalMl || 2500;
   const progress = Math.min((totalWater / waterGoal) * 100, 100);
-
-  // Animate Number Count Up — fixed: only depends on totalWater, uses ref for start value
-  useEffect(() => {
-    const duration = 600;
-    const target = totalWater;
-    const start = animStartRef.current;
-
-    if (target === start) return;
-
-    // Cancel any running animation
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-
-    let startTime;
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progressTime = timestamp - startTime;
-      const pctTime = Math.min(progressTime / duration, 1);
-      
-      const easeOut = 1 - Math.pow(1 - pctTime, 3);
-      const current = Math.round(start + (target - start) * easeOut);
-      setDisplayWater(current);
-
-      if (progressTime < duration) {
-        animFrameRef.current = requestAnimationFrame(step);
-      } else {
-        setDisplayWater(target);
-        animStartRef.current = target;
-      }
-    };
-
-    animFrameRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, [totalWater]);
 
   useEffect(() => {
     const fetchWater = async () => {
@@ -63,9 +25,7 @@ export default function WaterTracker() {
         setIsLoading(true);
         const res = await waterAPI.getToday();
         const initialWater = res.data.totalWaterMl || 0;
-        animStartRef.current = 0; // start animation from 0
         setTotalWater(initialWater);
-        setDisplayWater(0);
         setEntries(res.data.entries || []);
       } catch (error) {
         toast.error(error.response?.data?.error || "Failed to load water data");
@@ -150,8 +110,8 @@ export default function WaterTracker() {
   const quickAmounts = [100, 200, 250, 500];
   
   // Dynamic color for text inside the circle
-  const textFillColor = progress > 55 ? "#ffffff" : "#1F2937";
-  const subTextFillColor = progress > 55 ? "rgba(255,255,255,0.8)" : "#6B7280";
+  const textFillColor = progress > 55 ? "#ffffff" : "var(--text-primary)";
+  const subTextFillColor = progress > 55 ? "rgba(255,255,255,0.8)" : "var(--text-muted)";
   
   // SVG size setup
   const size = 220;
@@ -177,35 +137,36 @@ export default function WaterTracker() {
   return (
     <div className="page-container" style={{ background: "var(--bg-page)" }}>
       
-      <div className="flex items-center gap-2.5 mb-6">
-        <svg viewBox="0 0 40 40" fill="none" className="w-9 h-9 water-tracker-header-icon">
-          {/* Ripple/Splash Base */}
-          <ellipse cx="20" cy="32" rx="14" ry="4" stroke="#38BDF8" strokeWidth="2" opacity="0.3" className="water-ripple-1"/>
-          <ellipse cx="20" cy="32" rx="8" ry="2.5" stroke="#0EA5E9" strokeWidth="2" opacity="0.5" className="water-ripple-2"/>
-          
-          {/* Floating Water Drop */}
-          <g className="floating-drop">
-            <path d="M20 14 C20 14 14 22 14 26 C14 29.5 16.5 32 20 32 C23.5 32 26 29.5 26 26 C26 22 20 14 20 14 Z" fill="#0EA5E9"/>
-            {/* Highlight */}
-            <path d="M17 26 C17 24 18 22 20 20" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
-          </g>
-          
-          {/* Little splash droplets */}
-          <circle cx="12" cy="26" r="1.5" fill="#38BDF8" className="water-splash-1" opacity="0"/>
-          <circle cx="28" cy="24" r="2" fill="#0EA5E9" className="water-splash-2" opacity="0"/>
-        </svg>
-        <h1 className="text-[22px] font-extrabold" style={{ color: "#1F2937", letterSpacing: "-0.5px" }}>
-          Water Tracker
-        </h1>
+      <div className="flex items-center gap-3 mb-6 mt-1">
+        <div className="glass-blue w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0">
+          <Droplets className="w-[22px] h-[22px]" style={{ color: "#0ea5e9" }} />
+        </div>
+        <div className="flex flex-col">
+          <h1 className="text-[22px] font-extrabold font-display leading-none" style={{ color: "var(--text-primary)", letterSpacing: "-0.5px" }}>
+            Water Tracker
+          </h1>
+          <span className="text-xs font-medium mt-1" style={{ color: "var(--text-muted)" }}>
+            Stay hydrated today
+          </span>
+        </div>
       </div>
 
       {/* Progress Card */}
-      <div className="card text-center mb-6 p-8 shadow-sm border border-gray-100">
-        
+      <div className="card text-center mb-6 p-8">
+
         {/* Liquid Fill SVG */}
-        <div 
-          className={`relative mx-auto mb-6 flex justify-center overflow-hidden rounded-full transition-all duration-1000 ${isGoalReached ? 'ring-4 ring-offset-4 ring-[#0EA5E9] shadow-[0_0_30px_rgba(14,165,233,0.4)]' : ''}`} 
-          style={{ width: size, height: size, background: "#F3F4F6" }}
+        <div
+          className="relative mx-auto mb-6 flex justify-center overflow-hidden rounded-full transition-all duration-1000"
+          style={{
+            width: size, height: size,
+            background: "linear-gradient(145deg, rgba(186,230,253,0.35) 0%, rgba(224,242,254,0.20) 60%, rgba(186,230,253,0.28) 100%)",
+            border: isGoalReached ? "1px solid rgba(14,165,233,0.50)" : "1px solid rgba(14,165,233,0.22)",
+            boxShadow: isGoalReached
+              ? "0 0 28px rgba(14,165,233,0.55), 0 0 70px rgba(56,189,248,0.25), 0 0 110px rgba(14,165,233,0.10), inset 0 1px 0 rgba(255,255,255,0.70), inset 0 -1px 0 rgba(14,165,233,0.08)"
+              : "0 4px 24px rgba(14,165,233,0.10), inset 0 1px 0 rgba(255,255,255,0.70), inset 0 -1px 0 rgba(14,165,233,0.08)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
         >
           
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 pointer-events-none">
@@ -259,9 +220,11 @@ export default function WaterTracker() {
           {/* Overlay Text (Dynamic Color) */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center mt-2 z-10 transition-colors duration-500">
             <Droplets className="w-8 h-8 mx-auto mb-1 transition-colors duration-500" style={{ color: textFillColor }} />
-            <p className="text-4xl font-black tabular-nums tracking-tight transition-colors duration-500" style={{ color: textFillColor }}>
-              {displayWater}
-            </p>
+            <AnimatedNumber
+              value={totalWater}
+              className="text-4xl font-black tabular-nums tracking-tight transition-colors duration-500 font-display"
+              style={{ color: textFillColor }}
+            />
             <p className="text-sm font-semibold transition-colors duration-500 mt-0.5" style={{ color: subTextFillColor }}>
               / {waterGoal} ml
             </p>
@@ -270,34 +233,65 @@ export default function WaterTracker() {
 
         {/* Progress Bar & Label */}
         <div className="w-full flex items-center justify-between mb-2">
-          <p className="text-sm font-bold" style={{ color: "#1F2937" }}>Daily Progress</p>
+          <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Daily Progress</p>
           <p className="text-sm font-bold" style={{ color: "#0EA5E9" }}>{Math.round(progress)}%</p>
         </div>
-        <div className="w-full h-3 rounded-full overflow-hidden" style={{ background: "#F3F4F6" }}>
+
+        {/* Liquid Glass Progress Bar */}
+        <div
+          className="w-full h-[18px] rounded-full relative overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg, rgba(186,230,253,0.40) 0%, rgba(224,242,254,0.25) 100%)",
+            border: "1px solid rgba(14,165,233,0.20)",
+            boxShadow: isGoalReached
+              ? "inset 0 2px 4px rgba(14,165,233,0.12), 0 0 14px rgba(14,165,233,0.30), inset 0 1px 0 rgba(255,255,255,0.60)"
+              : "inset 0 2px 4px rgba(14,165,233,0.08), inset 0 1px 0 rgba(255,255,255,0.60)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            transition: "box-shadow 600ms ease"
+          }}
+        >
+          {/* Fill */}
           <div
-            className="h-full rounded-full transition-all"
-            style={{ 
-              width: `${progress}%`, 
-              background: "linear-gradient(90deg, #7DD3FC, #0EA5E9)",
-              transitionDuration: "800ms",
-              transitionTimingFunction: "ease-out"
+            className="absolute inset-y-0 left-0 rounded-full overflow-hidden"
+            style={{
+              width: `${progress}%`,
+              background: isGoalReached
+                ? "linear-gradient(90deg, #38BDF8 0%, #0EA5E9 50%, #0284C7 100%)"
+                : "linear-gradient(90deg, #7DD3FC 0%, #38BDF8 55%, #0EA5E9 100%)",
+              transition: "width 800ms cubic-bezier(0.34,1.56,0.64,1), background 600ms ease"
             }}
+          >
+            {/* Glass sheen — top half bright highlight */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0.06) 50%, transparent 100%)"
+              }}
+            />
+            {/* Subtle bottom rim glow */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-[3px] pointer-events-none"
+              style={{ background: "rgba(255,255,255,0.18)" }}
+            />
+          </div>
+
+          {/* Track top specular edge */}
+          <div
+            className="absolute inset-x-0 top-0 h-px pointer-events-none"
+            style={{ background: "var(--lg-hl-top)", zIndex: 2 }}
           />
         </div>
       </div>
 
       {/* Quick Add Buttons */}
-      <h2 className="text-sm font-bold mb-3 uppercase tracking-wider" style={{ color: "#6B7280" }}>Quick Add</h2>
+      <h2 className="text-sm font-bold mb-3 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Quick Add</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {quickAmounts.map((amount) => (
           <button
             key={amount}
             onClick={() => addWater(amount)}
-            className="py-3.5 rounded-full text-sm font-bold shadow-sm transition-all duration-150 active:scale-[0.92] btn-spring flex justify-center items-center gap-1.5"
-            style={{
-              background: "#EFF6FF",
-              color: "#2563EB",
-            }}
+            className="glass-blue py-3.5 rounded-full text-sm font-bold transition-all duration-150 active:scale-[0.92] btn-spring flex justify-center items-center gap-1.5"
           >
             <Droplets className="w-4 h-4" /> +{amount}ml
           </button>
@@ -305,38 +299,54 @@ export default function WaterTracker() {
       </div>
 
       {/* Custom Amount */}
-      <div className="card p-4 flex items-center justify-between mb-8 shadow-sm border border-gray-100">
+      <div className="card p-4 flex items-center justify-between mb-8">
         <button
           onClick={() => setCustomAmount((prev) => Math.max(50, prev - 50))}
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 active:scale-[0.92] btn-spring"
-          style={{ background: "#EFF6FF", color: "#2563EB" }}
+          className="glass-blue w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 active:scale-[0.92] btn-spring"
         >
           <Minus className="w-6 h-6" />
         </button>
         <button
           onClick={() => addWater(customAmount)}
-          className="font-black text-lg px-6 py-2.5 rounded-2xl transition-all duration-150 active:scale-[0.96] btn-spring flex items-center gap-2"
-          style={{ color: "#1F2937", background: "transparent" }}
+          className="glass-blue font-black text-lg px-6 py-2.5 rounded-2xl transition-all duration-150 active:scale-[0.96] btn-spring flex items-center gap-2"
         >
           Add {customAmount} ml
         </button>
         <button
           onClick={() => setCustomAmount((prev) => prev + 50)}
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 active:scale-[0.92] btn-spring"
-          style={{ background: "#EFF6FF", color: "#2563EB" }}
+          className="glass-blue w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 active:scale-[0.92] btn-spring"
         >
           <Plus className="w-6 h-6" />
         </button>
       </div>
 
       {/* Entries List */}
-      <h2 className="text-sm font-bold mb-3 uppercase tracking-wider" style={{ color: "#6B7280" }}>Today&apos;s Entries</h2>
+      <h2 className="text-sm font-bold mb-3 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Today&apos;s Entries</h2>
       {isLoading ? (
-        <div className="card text-center py-8" style={{ color: "#6B7280" }}>Loading water entries...</div>
+        <div className="card text-center py-8" style={{ color: "var(--text-muted)" }}>Loading water entries...</div>
       ) : entries.length === 0 ? (
-        <div className="card text-center py-10 shadow-sm border border-gray-100">
-          <Droplets className="w-8 h-8 mx-auto mb-3" style={{ color: "#9CA3AF" }} />
-          <p className="font-semibold text-sm" style={{ color: "#6B7280" }}>Start your hydration journey 💧</p>
+        <div
+          className="rounded-2xl text-center py-10 px-4"
+          style={{
+            background: "linear-gradient(145deg, rgba(186,230,253,0.28) 0%, rgba(224,242,254,0.15) 60%, rgba(186,230,253,0.22) 100%)",
+            border: "1px solid rgba(14,165,233,0.18)",
+            boxShadow: "0 4px 20px rgba(14,165,233,0.08), inset 0 1px 0 rgba(255,255,255,0.65)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+          }}
+        >
+          <div
+            className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+            style={{
+              background: "linear-gradient(180deg, rgba(56,189,248,0.22), rgba(14,165,233,0.10))",
+              border: "1px solid rgba(14,165,233,0.25)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+            }}
+          >
+            <Droplets className="w-7 h-7" style={{ color: "#0ea5e9" }} />
+          </div>
+          <p className="font-bold text-sm mb-1" style={{ color: "var(--text-primary)" }}>No entries yet today</p>
+          <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Tap a quick-add button above to start your hydration journey</p>
         </div>
       ) : (
         <div className="space-y-3 relative z-10 overflow-hidden pb-10">
@@ -345,24 +355,36 @@ export default function WaterTracker() {
             const isNew = entry.isNew;
             
             return (
-              <div 
-                key={entry.id} 
-                className={`card p-4 flex items-center justify-between gap-3 shadow-sm border border-gray-100 bg-white border-l-[4px] ${isDeleting ? 'animate-slide-out-left' : isNew ? 'animate-slide-in-right' : ''}`} 
-                style={{ borderLeftColor: "#38BDF8" }}
+              <div
+                key={entry.id}
+                className={`p-4 flex items-center justify-between gap-3 rounded-2xl ${isDeleting ? 'animate-slide-out-left' : isNew ? 'animate-slide-in-right' : ''}`}
+                style={{
+                  background: "linear-gradient(145deg, rgba(186,230,253,0.22) 0%, rgba(224,242,254,0.12) 100%)",
+                  border: "1px solid rgba(14,165,233,0.16)",
+                  borderLeft: "3px solid rgba(14,165,233,0.55)",
+                  boxShadow: "0 2px 12px rgba(14,165,233,0.07), inset 0 1px 0 rgba(255,255,255,0.55)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                }}
               >
                 <div className="flex items-center gap-4">
                   <Droplets className="w-6 h-6" style={{ color: "#38BDF8" }} />
                   <div>
-                    <p className="font-bold text-base" style={{ color: "#1F2937" }}>+{entry.amountMl} ml</p>
-                    <p className="text-xs font-semibold" style={{ color: "#6B7280" }}>
+                    <p className="font-bold text-base" style={{ color: "var(--text-primary)" }}>+{entry.amountMl} ml</p>
+                    <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                       {new Date(entry.loggedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => removeWater(entry.id, entry.amountMl)}
-                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-red-50 active:scale-90"
-                  style={{ color: "#EF4444" }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90"
+                  style={{
+                    background: "linear-gradient(180deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.07) 100%)",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)",
+                    color: "#EF4444",
+                  }}
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>

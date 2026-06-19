@@ -156,9 +156,8 @@ function ManualAddSection({ categories }) {
       </div>
 
       <button disabled={saving} type="submit"
-        className="w-full py-3 rounded-xl font-semibold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-        style={{ background: "var(--green-primary)", color: "var(--text-on-green)", border: "none" }}>
-        {saving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : <><Plus className="w-4 h-4" /> Add to Database</>}
+        className="glass-green w-full py-3 rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 no-spring">
+        {saving ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Saving...</> : <><Plus className="w-4 h-4" /> Add to Database</>}
       </button>
     </form>
   );
@@ -205,7 +204,7 @@ export default function AdminBulkUpload() {
   if (!user?.isAdmin) {
     return (
       <div className="page-container animate-fade-in">
-        <div className="card p-6 text-center" style={{ border: "1px dashed var(--border-default)" }}>
+        <div className="card p-6 text-center" style={{ border: "1px dashed var(--lg-border)" }}>
           <ShieldCheck className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
           <h1 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Admin Access Required</h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>You need admin privileges.</p>
@@ -231,11 +230,17 @@ export default function AdminBulkUpload() {
           { key: "csv", label: "CSV Upload", icon: FileSpreadsheet },
         ].map(t => (
           <button key={t.key} onClick={() => { setTab(t.key); setResult(null); }}
-            className="filter-chip flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border"
-            style={{
-              background: tab === t.key ? "var(--green-primary)" : "var(--surface-3)",
-              color: tab === t.key ? "var(--text-on-green)" : "var(--text-secondary)",
-              borderColor: tab === t.key ? "transparent" : "var(--border-default)",
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.97] no-spring"
+            style={tab === t.key ? {
+              background: "linear-gradient(180deg, rgba(34,197,94,0.18), rgba(34,197,94,0.08))",
+              border: "1px solid var(--green-border)",
+              boxShadow: "0 3px 12px rgba(34,197,94,0.18), inset 0 1px 0 rgba(255,255,255,0.35)",
+              color: "var(--green-primary)",
+            } : {
+              background: "var(--lg-tint)",
+              border: "1px solid var(--lg-border)",
+              boxShadow: "inset 0 1px 0 var(--lg-hl-top)",
+              color: "var(--text-secondary)",
             }}>
             <t.icon className="w-4 h-4" /> {t.label}
           </button>
@@ -264,7 +269,7 @@ export default function AdminBulkUpload() {
 
               {/* File Drop Zone */}
               <label className="block cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all hover:border-[var(--green-primary)]"
-                style={{ borderColor: fileName ? "var(--green-primary)" : "var(--border-default)", background: fileName ? "var(--green-subtle)" : "transparent" }}>
+                style={{ borderColor: fileName ? "var(--green-primary)" : "var(--lg-border)", background: fileName ? "var(--green-subtle)" : "transparent" }}>
                 <input type="file" accept=".csv" className="hidden" onChange={handleFile} />
                 {fileName ? (
                   <div className="flex items-center justify-center gap-2">
@@ -282,9 +287,8 @@ export default function AdminBulkUpload() {
               </label>
 
               <button onClick={handleCsvUpload} disabled={isUploading || !csvText.trim()}
-                className="w-full mt-4 py-3 rounded-xl font-semibold transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: "var(--green-primary)", color: "var(--text-on-green)", border: "none" }}>
-                {isUploading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload to Database</>}
+                className="glass-green w-full mt-4 py-3 rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 no-spring">
+                {isUploading ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload to Database</>}
               </button>
             </div>
 
@@ -297,8 +301,8 @@ export default function AdminBulkUpload() {
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     ["Inserted", result.insertedCount || 0, "var(--green-subtle)", "var(--green-text)"],
-                    ["Duplicates", result.duplicateCount || 0, "var(--surface-3)", "var(--text-secondary)"],
-                    ["Invalid", result.invalidCount || 0, result.invalidCount > 0 ? "#fef2f2" : "var(--surface-3)", result.invalidCount > 0 ? "#dc2626" : "var(--text-secondary)"],
+                    ["Duplicates", result.duplicateCount || 0, "var(--lg-tint)", "var(--text-secondary)"],
+                    ["Invalid", result.invalidCount || 0, result.invalidCount > 0 ? "#fef2f2" : "var(--lg-tint)", result.invalidCount > 0 ? "#dc2626" : "var(--text-secondary)"],
                   ].map(([label, count, bg, color]) => (
                     <div key={label} className="rounded-xl p-3 text-center" style={{ background: bg }}>
                       <p className="text-xl font-black" style={{ color }}>{count}</p>

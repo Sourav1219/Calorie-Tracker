@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 
-export default function ProtectedRoute({ children }) {
-  const { isLoggedIn, isLoading } = useUser();
+export default function ProtectedRoute({ children, adminOnly = false }) {
+  const { isLoggedIn, isLoading, user } = useUser();
 
   if (isLoading) {
     return (
@@ -15,6 +15,11 @@ export default function ProtectedRoute({ children }) {
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Admin-only routes: non-admins are bounced to their dashboard.
+  if (adminOnly && !user?.isAdmin) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children ? children : <Outlet />;

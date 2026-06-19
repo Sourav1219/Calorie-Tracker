@@ -4,6 +4,8 @@ import { useUser } from "../context/UserContext";
 import { useNotifications } from "../context/NotificationContext";
 import { Link, useLocation } from "react-router-dom";
 import { Bell, X, Flame, Droplets, Target, UtensilsCrossed, BarChart3, Home, CalendarDays, User } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
+import BrandMark from "./BrandMark";
 
 const NOTIFICATION_STYLES = {
   meal: { icon: UtensilsCrossed, color: "#d97706", bg: "#FEF3C7" },
@@ -103,30 +105,39 @@ export default function Navbar() {
     <nav
       className="relative z-50 flex-shrink-0"
       style={{
-        background: "rgba(249, 250, 251, 0.8)",
-        borderBottom: "1px solid var(--border-default)",
+        background: "linear-gradient(180deg, var(--lg-sheen), transparent 60%), var(--nav-surface)",
+        backdropFilter: "blur(18px) saturate(180%)",
+        WebkitBackdropFilter: "blur(18px) saturate(180%)",
+        borderBottom: "1px solid var(--lg-border)",
+        boxShadow: "inset 0 1px 0 0 var(--lg-hl-top)",
         paddingTop: "env(safe-area-inset-top)",
       }}
     >
       <div className="max-w-lg md:max-w-4xl mx-auto px-4 h-14 flex items-center justify-between relative">
         <div className="flex items-center">
-          <Link to="/dashboard" className="flex flex-col">
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{today}</p>
-            <h2 className="text-sm font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
-              🥗 PureIntake
-            </h2>
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <BrandMark size={32} />
+            <span className="flex flex-col">
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>{today}</span>
+              <span className="text-sm font-bold font-display leading-tight" style={{ color: "var(--text-primary)" }}>
+                PureIntake
+              </span>
+            </span>
           </Link>
         </div>
 
         {/* Mobile Navigation hidden on desktop? No, we remove the desktop navigation completely! */}
 
         <div className="flex items-center gap-2">
+          {/* Dark mode toggle */}
+          <ThemeToggle />
+
           {/* Notification Bell */}
           <div ref={buttonRef}>
             <button
               onClick={togglePanel}
               className="bell-button-group w-11 h-11 rounded-full flex items-center justify-center transition-colors relative no-spring"
-              style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}
+              style={{ background: "var(--lg-control-bg)", border: "1px solid var(--lg-control-border)", boxShadow: "inset 0 1px 0 var(--lg-hl-top)", color: "var(--text-muted)" }}
             >
               <Bell 
                 className={`bell-icon w-5 h-5 ${(hasNew || isRinging) ? 'animate-bell-shake' : ''}`} 
@@ -144,8 +155,7 @@ export default function Navbar() {
           <button
             id="navbar-avatar"
             onClick={() => navigate("/profile")}
-            className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 hover:scale-[1.05] hover:shadow-md hover:ring-2 hover:ring-green-500/20 active:scale-95 overflow-hidden no-spring"
-            style={{ background: "var(--green-primary)", color: "var(--text-on-green)" }}
+            className="glass-green w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 hover:scale-[1.05] active:scale-95 overflow-hidden no-spring"
           >
             {user?.photoUrl ? (
               <img src={user.photoUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -159,10 +169,10 @@ export default function Navbar() {
         {isPanelOpen && (
           <div ref={panelContentRef} className="notification-panel animate-panel-slide-down">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                  <h3 className="font-bold text-[18px] text-gray-900">Notifications</h3>
+                <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: "var(--lg-border)" }}>
+                  <h3 className="font-bold text-[18px]" style={{ color: "var(--text-primary)" }}>Notifications</h3>
                   {unreadCount > 0 && (
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
                       className="text-[13px] font-semibold text-green-600 hover:text-green-700"
                     >
@@ -172,27 +182,33 @@ export default function Navbar() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 p-3 bg-gray-50/50 border-b border-gray-100">
-                  <button 
+                <div className="flex gap-2 p-3 border-b" style={{ borderColor: "var(--lg-border)", background: "var(--lg-tint)" }}>
+                  <button
                     onClick={(e) => { e.stopPropagation(); setFilter("all"); }}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${filter === "all" ? 'bg-green-100 text-green-700' : 'bg-transparent text-gray-500 hover:bg-gray-100'}`}
+                    className="px-4 py-1.5 rounded-full text-xs font-bold transition-colors"
+                    style={filter === "all"
+                      ? { background: "var(--green-subtle)", color: "var(--green-text)" }
+                      : { background: "transparent", color: "var(--text-muted)" }}
                   >
                     All
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); setFilter("unread"); }}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${filter === "unread" ? 'bg-green-100 text-green-700' : 'bg-transparent text-gray-500 hover:bg-gray-100'}`}
+                    className="px-4 py-1.5 rounded-full text-xs font-bold transition-colors"
+                    style={filter === "unread"
+                      ? { background: "var(--green-subtle)", color: "var(--green-text)" }
+                      : { background: "transparent", color: "var(--text-muted)" }}
                   >
                     Unread {unreadCount > 0 && `(${unreadCount})`}
                   </button>
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto max-h-[50vh] bg-white">
+                <div className="flex-1 overflow-y-auto max-h-[50vh]" style={{ background: "transparent" }}>
                   {filteredNotifications.length === 0 ? (
                     <div className="py-10 text-center flex flex-col items-center justify-center">
-                      <Bell className="w-8 h-8 text-gray-300 mb-2" />
-                      <p className="text-sm font-medium text-gray-500">No notifications here</p>
+                      <Bell className="w-8 h-8 mb-2" style={{ color: "var(--text-muted)", opacity: 0.5 }} />
+                      <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No notifications here</p>
                     </div>
                   ) : (
                     filteredNotifications.map(n => {
@@ -200,10 +216,15 @@ export default function Navbar() {
                       const Icon = style.icon;
                       
                       return (
-                        <div 
+                        <div
                           key={n.id}
                           onClick={() => !n.read && markAsRead(n.id)}
-                          className={`relative flex items-start gap-3 p-4 border-b border-gray-50 transition-colors ${!n.read ? 'bg-[#F0FDF4] cursor-pointer' : 'bg-white'} group`}
+                          className="relative flex items-start gap-3 p-4 border-b transition-colors group"
+                          style={{
+                            borderColor: "var(--divider)",
+                            background: !n.read ? "var(--green-subtle)" : "transparent",
+                            cursor: !n.read ? "pointer" : "default",
+                          }}
                         >
                           <div 
                             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -213,13 +234,13 @@ export default function Navbar() {
                           </div>
                           
                           <div className="flex-1 min-w-0 pr-6">
-                            <h4 className="text-[14px] font-bold text-gray-900 truncate">
+                            <h4 className="text-[14px] font-bold truncate" style={{ color: "var(--text-primary)" }}>
                               {n.title}
                             </h4>
-                            <p className="text-[13px] text-gray-600 mt-0.5 leading-snug">
+                            <p className="text-[13px] mt-0.5 leading-snug" style={{ color: "var(--text-secondary)" }}>
                               {n.message}
                             </p>
-                            <p className="text-[11px] text-gray-400 mt-1 font-medium">
+                            <p className="text-[11px] mt-1 font-medium" style={{ color: "var(--text-muted)" }}>
                               {formatTimeAgo(n.time)}
                             </p>
                           </div>
@@ -230,7 +251,8 @@ export default function Navbar() {
 
                           <button
                             onClick={(e) => { e.stopPropagation(); removeNotification(n.id); }}
-                            className="absolute right-2 top-2 p-1.5 rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all sm:opacity-100 sm:bg-transparent"
+                            className="absolute right-2 top-2 p-1.5 rounded-full hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all sm:opacity-100 sm:bg-transparent no-spring"
+                            style={{ color: "var(--text-muted)" }}
                             aria-label="Remove notification"
                           >
                             <X size={14} />

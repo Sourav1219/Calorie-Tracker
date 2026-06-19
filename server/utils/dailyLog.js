@@ -1,3 +1,4 @@
+const { randomUUID } = require("crypto");
 const DailyLog = require("../models/DailyLog");
 
 function formatDateKey(input = new Date()) {
@@ -5,29 +6,38 @@ function formatDateKey(input = new Date()) {
   if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
     return input;
   }
-  
+
   const date = input instanceof Date ? input : new Date(input);
-  
-  // Force Asia/Kolkata (IST) for date generation
-  const istDateStr = date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  const istDate = new Date(istDateStr);
-  
-  const year = istDate.getFullYear();
-  const month = String(istDate.getMonth() + 1).padStart(2, "0");
-  const day = String(istDate.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+
+  // Force Asia/Kolkata (IST) for the day boundary. en-CA formats as YYYY-MM-DD.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
 
 async function ensureDailyLog(userId, date = formatDateKey()) {
-  let dailyLog = await DailyLog.findOne({ userId, date });
-  if (!dailyLog) {
-    dailyLog = await DailyLog.create({ userId, date });
+  // Atomic upsert avoids a findOne→create race that could violate the
+  // unique (userId, date) index and 500 on the first concurrent log of a day.
+  try {
+    return await DailyLog.findOneAndUpdate(
+      { userId, date },
+      { $setOnInsert: { _id: randomUUID(), userId, date } },
+      { upsert: true, new: true }
+    );
+  } catch (err) {
+    // Two upserts raced and one hit the unique index — the doc exists now.
+    if (err.code === 11000) {
+      return DailyLog.findOne({ userId, date });
+    }
+    throw err;
   }
-  return dailyLog;
 }
 
 async function applyDailyLogNutritionDelta(dailyLogId, delta) {
-  const updates = {
+  const inc = {
     totalCalories: delta.calories || 0,
     totalProteinG: delta.proteinG || 0,
     totalCarbsG: delta.carbsG || 0,
@@ -35,18 +45,29 @@ async function applyDailyLogNutritionDelta(dailyLogId, delta) {
     totalWaterMl: delta.waterMl || 0,
   };
 
-  const dailyLog = await DailyLog.findById(dailyLogId);
+  // Atomic $inc prevents lost updates when requests overlap (e.g. rapid
+  // water quick-adds), unlike a read-modify-write.
+  const dailyLog = await DailyLog.findByIdAndUpdate(
+    dailyLogId,
+    { $inc: inc },
+    { new: true }
+  );
   if (!dailyLog) {
     return null;
   }
 
-  dailyLog.totalCalories = Math.max(0, dailyLog.totalCalories + updates.totalCalories);
-  dailyLog.totalProteinG = Math.max(0, dailyLog.totalProteinG + updates.totalProteinG);
-  dailyLog.totalCarbsG = Math.max(0, dailyLog.totalCarbsG + updates.totalCarbsG);
-  dailyLog.totalFatG = Math.max(0, dailyLog.totalFatG + updates.totalFatG);
-  dailyLog.totalWaterMl = Math.max(0, dailyLog.totalWaterMl + updates.totalWaterMl);
+  // Safety net: clamp any total that somehow went negative back to 0.
+  const clamp = {};
+  for (const key of Object.keys(inc)) {
+    if (dailyLog[key] < 0) {
+      clamp[key] = 0;
+      dailyLog[key] = 0;
+    }
+  }
+  if (Object.keys(clamp).length > 0) {
+    await DailyLog.updateOne({ _id: dailyLogId }, { $set: clamp });
+  }
 
-  await dailyLog.save();
   return dailyLog;
 }
 

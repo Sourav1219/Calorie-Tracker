@@ -87,12 +87,15 @@ export default class ErrorBoundary extends React.Component {
             <button
               onClick={this.handleReload}
               style={{
-                padding: "10px 20px",
-                borderRadius: "12px",
-                border: "none",
-                background: "#22c55e",
-                color: "#fff",
-                fontWeight: 600,
+                padding: "10px 22px",
+                borderRadius: "14px",
+                border: "1px solid rgba(34,197,94,0.40)",
+                background: "linear-gradient(180deg, rgba(34,197,94,0.28) 0%, rgba(34,197,94,0.14) 100%)",
+                boxShadow: "0 4px 16px rgba(34,197,94,0.18), inset 0 1px 0 rgba(255,255,255,0.50)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "#16a34a",
+                fontWeight: 700,
                 fontSize: "14px",
                 cursor: "pointer",
               }}
@@ -102,12 +105,15 @@ export default class ErrorBoundary extends React.Component {
             <button
               onClick={this.handleGoHome}
               style={{
-                padding: "10px 20px",
-                borderRadius: "12px",
-                border: "1px solid #e5e7eb",
-                background: "#fff",
+                padding: "10px 22px",
+                borderRadius: "14px",
+                border: "1px solid rgba(0,0,0,0.09)",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.45) 100%)",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.90)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
                 color: "#374151",
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: "14px",
                 cursor: "pointer",
               }}
