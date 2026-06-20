@@ -4,6 +4,7 @@ import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
 import { logsAPI, mealsAPI, getLocalDateKey } from "../utils/api";
 import { getCache, setCache, hasCache, clearCache } from "../utils/pageCache";
+import { mealsCacheAddMeal } from "../utils/logCache";
 import { calculateMacroTargets } from "../utils/macroTargets";
 import CalorieRing from "../components/CalorieRing";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -282,6 +283,8 @@ export default function Dashboard() {
       const res = await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
       const saved = res.data?.meal;
       if (!saved) return;
+      // Keep the meal-log's cached list in sync for an instant, correct revisit.
+      mealsCacheAddMeal(saved);
       // Reconcile against the authoritative create response — swap the temp row
       // for the saved one and correct the totals by the rounding delta. We do
       // NOT reload here: an immediate refetch can return a stale read-after-write

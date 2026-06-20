@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { mealsAPI, getLocalDateKey } from "../utils/api";
 import { getCache, setCache, hasCache } from "../utils/pageCache";
+import { dashCacheAddMeal, dashCacheRemoveMeal } from "../utils/logCache";
 import { useMealSections } from "../context/MealSectionContext";
 import MealSectionSheet from "../components/MealSectionSheet";
 import MealIcon from "../components/MealIcon";
@@ -99,6 +100,9 @@ export default function MealLog() {
       const saved = res.data?.meal;
       if (saved) {
         setMeals((cur) => cur.map((m) => (m.id === tempId ? saved : m)));
+        // Patch the dashboard's cached log too, so its calorie ring is already
+        // correct the next time it's opened — no post-visit fetch lag.
+        dashCacheAddMeal(saved);
       }
     } catch (error) {
       setMeals((cur) => cur.filter((m) => m.id !== tempId)); // revert
@@ -118,12 +122,16 @@ export default function MealLog() {
     // Remove it instantly; delete on the server in the background and restore
     // the row only if that fails.
     const snapshot = meals;
+    const removed = meals.find((meal) => meal.id === mealId);
     setMeals((current) => current.filter((meal) => meal.id !== mealId));
     toast.success("Meal removed");
+    // Keep the dashboard's cached ring/totals in sync for the next visit.
+    if (removed) dashCacheRemoveMeal(removed);
     try {
       await mealsAPI.remove(mealId);
     } catch (error) {
       setMeals(snapshot);
+      if (removed) dashCacheAddMeal(removed); // restore the cache patch too
       toast.error(error.response?.data?.error || "Failed to delete meal");
     }
   };

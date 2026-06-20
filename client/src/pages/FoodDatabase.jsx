@@ -8,6 +8,7 @@ import FoodCard from "../components/NutritionCard";
 import FoodDetailModal from "../components/FoodDetailModal";
 import AddCustomFoodForm from "../components/AddCustomFoodForm";
 import { dismissModalsForNavigation } from "../hooks/useModalHistory";
+import { dashCacheAddMeal, mealsCacheAddMeal } from "../utils/logCache";
 
 function SkeletonPulse({ count = 4 }) {
   return (
@@ -161,7 +162,12 @@ export default function FoodDatabase() {
     // surfaces errors — handle them here. Save first so the Meal Log's fetch
     // on mount already includes the new item.
     try {
-      await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
+      const res = await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
+      const saved = res.data?.meal;
+      // Patch both cached surfaces so the Meal Log and the dashboard ring are
+      // already correct when reached — no post-navigation/visit fetch lag.
+      dashCacheAddMeal(saved);
+      mealsCacheAddMeal(saved);
       toast.success(`${food.name} added to ${section.name}`);
       navigate(`/log?meal=${targetSectionId}`);
     } catch (error) {
