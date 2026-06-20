@@ -5,27 +5,31 @@ import { isProfileComplete } from "./utils/user";
 import { foodAPI } from "./utils/api";
 import { setCache, hasCache } from "./utils/pageCache";
 
-// Start fetching all page chunks immediately — they're cached by the time
-// the user navigates, so transitions feel instant (no spinner).
-const dashboardChunk    = import("./pages/Dashboard");
-const mealLogChunk      = import("./pages/MealLog");
-const foodDbChunk       = import("./pages/FoodDatabase");
-const waterChunk        = import("./pages/WaterTracker");
-const calendarChunk     = import("./pages/Calendar");
-const profileChunk      = import("./pages/Profile");
-const adminChunk        = import("./pages/AdminBulkUpload");
-const loginChunk        = import("./pages/Login");
-const registerChunk     = import("./pages/Register");
+// Lazy route chunks — each loads on demand when first rendered. They're also
+// warmed during browser idle time (see the prefetch effect below) so navigation
+// still feels instant, WITHOUT downloading/parsing every route's JS up front on
+// the landing screen (which inflated initial bundle size + main-thread work).
+const pageImport = {
+  Dashboard:       () => import("./pages/Dashboard"),
+  MealLog:         () => import("./pages/MealLog"),
+  FoodDatabase:    () => import("./pages/FoodDatabase"),
+  WaterTracker:    () => import("./pages/WaterTracker"),
+  Calendar:        () => import("./pages/Calendar"),
+  Profile:         () => import("./pages/Profile"),
+  AdminBulkUpload: () => import("./pages/AdminBulkUpload"),
+  Login:           () => import("./pages/Login"),
+  Register:        () => import("./pages/Register"),
+};
 
-const Dashboard       = lazy(() => dashboardChunk);
-const MealLog         = lazy(() => mealLogChunk);
-const FoodDatabase    = lazy(() => foodDbChunk);
-const WaterTracker    = lazy(() => waterChunk);
-const Calendar        = lazy(() => calendarChunk);
-const Profile         = lazy(() => profileChunk);
-const AdminBulkUpload = lazy(() => adminChunk);
-const Login           = lazy(() => loginChunk);
-const Register        = lazy(() => registerChunk);
+const Dashboard       = lazy(pageImport.Dashboard);
+const MealLog         = lazy(pageImport.MealLog);
+const FoodDatabase    = lazy(pageImport.FoodDatabase);
+const WaterTracker    = lazy(pageImport.WaterTracker);
+const Calendar        = lazy(pageImport.Calendar);
+const Profile         = lazy(pageImport.Profile);
+const AdminBulkUpload = lazy(pageImport.AdminBulkUpload);
+const Login           = lazy(pageImport.Login);
+const Register        = lazy(pageImport.Register);
 
 import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav";
@@ -47,6 +51,34 @@ function App() {
   useLayoutEffect(() => {
     contentRef.current?.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // Warm route chunks during browser idle time so navigation stays instant,
+  // without burdening the landing screen with every page's JS up front. Only
+  // the relevant set is prefetched (app pages once logged in, auth pages
+  // otherwise; admin only for admins).
+  useEffect(() => {
+    if (isLoading) return;
+    const warm = () => {
+      if (isLoggedIn) {
+        pageImport.Dashboard();
+        pageImport.MealLog();
+        pageImport.FoodDatabase();
+        pageImport.WaterTracker();
+        pageImport.Calendar();
+        pageImport.Profile();
+        if (user?.role === "admin") pageImport.AdminBulkUpload();
+      } else {
+        pageImport.Login();
+        pageImport.Register();
+      }
+    };
+    const ric = window.requestIdleCallback;
+    const handle = ric ? ric(warm, { timeout: 2500 }) : window.setTimeout(warm, 1500);
+    return () => {
+      if (ric && window.cancelIdleCallback) window.cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
+    };
+  }, [isLoading, isLoggedIn, user?.role]);
 
   // Warm the food catalog cache right after login so the "Add food" list opens
   // instantly instead of fetching the whole catalog the first time it's opened.

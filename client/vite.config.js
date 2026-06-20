@@ -15,6 +15,11 @@ export default defineConfig({
           if (id.includes("react-router")) return "router";
           if (id.includes("lucide-react")) return "icons";
           if (id.includes("react-hot-toast")) return "toasts";
+          // Page-specific libs in their own chunks so they load only with the
+          // (lazy) page that uses them, instead of bloating the vendor chunk
+          // that every page — including the login screen — downloads up front.
+          if (id.includes("canvas-confetti")) return "confetti"; // Dashboard only
+          if (id.includes("react-easy-crop")) return "crop";     // Profile only
           return "vendor";
         },
       },
