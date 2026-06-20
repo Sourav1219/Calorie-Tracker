@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useUser } from "../context/UserContext";
 import { useMealSections } from "../context/MealSectionContext";
 import { logsAPI, mealsAPI, getLocalDateKey } from "../utils/api";
-import { getCache, setCache, hasCache } from "../utils/pageCache";
+import { getCache, setCache, hasCache, clearCache } from "../utils/pageCache";
 import { calculateMacroTargets } from "../utils/macroTargets";
 import CalorieRing from "../components/CalorieRing";
 import AnimatedNumber from "../components/AnimatedNumber";
@@ -25,11 +25,26 @@ function fireGoalConfetti() {
 
 function AnimatedMacroCard({ macro, delayMs = 0 }) {
   const [barWidth, setBarWidth] = useState(0);
+  // Staggered fill on first paint; snappy on later value changes so macros keep
+  // pace with the calorie ring the moment food is logged.
+  const hasAnimatedRef = useRef(false);
+  const [barMs, setBarMs] = useState(1000);
+  const [numberMs, setNumberMs] = useState(520);
 
   useEffect(() => {
     const targetPct = macro.target > 0 ? Math.min((macro.value / macro.target) * 100, 100) : 0;
-    const t1 = setTimeout(() => setBarWidth(targetPct), delayMs + 50);
-    return () => clearTimeout(t1);
+
+    if (!hasAnimatedRef.current) {
+      const t1 = setTimeout(() => {
+        setBarWidth(targetPct);
+        hasAnimatedRef.current = true;
+      }, delayMs + 50);
+      return () => clearTimeout(t1);
+    }
+
+    setBarMs(380);
+    setNumberMs(360);
+    setBarWidth(targetPct);
   }, [macro.value, macro.target, delayMs]);
 
   const pct = macro.target > 0 ? Math.round(Math.min((macro.value / macro.target) * 100, 100)) : 0;
@@ -43,47 +58,50 @@ function AnimatedMacroCard({ macro, delayMs = 0 }) {
         boxShadow: "inset 0 1px 0 var(--lg-hl-top)",
       }}
     >
-      <div className="flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span
-            className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0"
-            style={{ background: `${macro.color}1f`, color: macro.color }}
-          >
-            {macro.label.charAt(0)}
-          </span>
-          <p className="text-xs font-medium truncate" style={{ color: "var(--text-muted)" }}>
-            {macro.label}
-          </p>
-        </div>
-        <span className="text-[10px] font-extrabold flex-shrink-0" style={{ color: macro.color }}>
-          {pct}%
-        </span>
+      {/* Label gets its own full-width row with a small colour dot, so it never
+          truncates or collides with the percentage on narrow screens. */}
+      <div className="flex items-center gap-1.5">
+        <span
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ background: macro.color }}
+        />
+        <p className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+          {macro.label}
+        </p>
       </div>
 
-      <p className="text-lg font-bold mt-1" style={{ color: macro.color }}>
-        <AnimatedNumber value={macro.value} />g
+      {/* Value */}
+      <p className="mt-1.5 text-lg leading-none font-extrabold" style={{ color: macro.color }}>
+        <AnimatedNumber value={macro.value} duration={numberMs} />
+        <span className="text-xs font-bold">g</span>
       </p>
 
       {/* Glossy, recessed progress bar with a soft color glow */}
       <div
-        className="w-full h-2 rounded-full mt-2.5"
+        className="w-full h-1.5 rounded-full mt-2.5"
         style={{ background: "var(--bg-subtle)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.14)" }}
       >
         <div
           className="h-full rounded-full"
           style={{
             width: `${barWidth}%`,
-            minWidth: barWidth > 0 ? "8px" : 0,
+            minWidth: barWidth > 0 ? "6px" : 0,
             background: `linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 55%), ${macro.color}`,
             boxShadow: `0 0 8px ${macro.color}80, inset 0 1px 0 rgba(255,255,255,0.4)`,
-            transition: "width 1s cubic-bezier(0.34, 1.2, 0.64, 1)",
+            transition: `width ${barMs}ms cubic-bezier(0.34, 1.2, 0.64, 1)`,
           }}
         />
       </div>
 
-      <p className="text-[10px] mt-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
-        of {macro.target}g
-      </p>
+      {/* Footer: percentage of goal + absolute target, on opposite ends */}
+      <div className="flex items-center justify-between mt-1.5">
+        <span className="text-[10px] font-extrabold" style={{ color: macro.color }}>
+          {pct}%
+        </span>
+        <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>
+          of {macro.target}g
+        </span>
+      </div>
     </div>
   );
 }
@@ -95,6 +113,10 @@ export default function Dashboard() {
   // figures instantly instead of flashing a skeleton and re-animating.
   const initialCacheKey = `dash:${getLocalDateKey(new Date())}`;
   const [log, setLog] = useState(() => (hasCache(initialCacheKey) ? getCache(initialCacheKey) : null));
+  // Mirror `log` in a ref so load() can tell whether it's refreshing the date
+  // already on screen, without listing `log` as a dependency.
+  const logRef = useRef(log);
+  logRef.current = log;
   const [isLoading, setIsLoading] = useState(() => !hasCache(initialCacheKey));
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date());
@@ -120,12 +142,20 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     const dateStr = getLocalDateKey(targetDate);
     const cacheKey = `dash:${dateStr}`;
-    // Show cached data immediately; only fall back to the skeleton on a cold load.
-    if (hasCache(cacheKey)) {
-      setLog(getCache(cacheKey));
-      setIsLoading(false);
-    } else {
-      setIsLoading(true);
+    // Seed from cache only when we're NOT already showing this date's data.
+    // On a date switch / cold load that gives an instant "already there" render.
+    // But on a refresh of the date we're already on (e.g. right after adding or
+    // resetting), seeding from cache would replace the just-updated state with
+    // the older cached snapshot — items briefly vanish, then the network brings
+    // them back. Skipping the seed there keeps the refresh silent.
+    const showingSameDate = logRef.current?.date === dateStr;
+    if (!showingSameDate) {
+      if (hasCache(cacheKey)) {
+        setLog(getCache(cacheKey));
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
     }
     try {
       const res = await logsAPI.getToday(dateStr);
@@ -239,6 +269,11 @@ export default function Dashboard() {
     try {
       setIsLoading(true);
       await logsAPI.resetToday(dateStr);
+      // Drop every page's cached snapshot for this date so the Meal Log / Water
+      // tabs don't seed from a stale cache that still lists the deleted items.
+      clearCache(`dash:${dateStr}`);
+      clearCache(`meals:${dateStr}`);
+      clearCache(`water:${dateStr}`);
       toast.success(`Dashboard reset for ${label}`);
       // Reload dashboard data
       await load();

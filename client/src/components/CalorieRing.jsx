@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AnimatedNumber from "./AnimatedNumber";
 
 export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
@@ -16,6 +16,11 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
   // cached/instant (no skeleton/reload), so only this widget animates.
   const [dashOffset, setDashOffset] = useState(circumference);
   const [displayConsumed, setDisplayConsumed] = useState(0);
+  // Slow, premium sweep on the first paint; snappy on later value changes so
+  // logging food updates the ring as instantly as the meal list does.
+  const hasAnimatedRef = useRef(false);
+  const [ringMs, setRingMs] = useState(1000);
+  const [numberMs, setNumberMs] = useState(520);
   useEffect(() => {
     setDisplayConsumed(consumed);
   }, [consumed]);
@@ -48,11 +53,21 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
 
   useEffect(() => {
     const targetOffset = circumference * (1 - boundedPct);
-    const t = setTimeout(() => {
-      setDashOffset(targetOffset);
-    }, 150);
 
-    return () => clearTimeout(t);
+    if (!hasAnimatedRef.current) {
+      // First paint: brief beat, then the full sweep up from empty.
+      const t = setTimeout(() => {
+        setDashOffset(targetOffset);
+        hasAnimatedRef.current = true;
+      }, 150);
+      return () => clearTimeout(t);
+    }
+
+    // Value changed after the intro (e.g. just logged food): drop the leading
+    // delay and shorten the durations so the ring + number react immediately.
+    setRingMs(380);
+    setNumberMs(360);
+    setDashOffset(targetOffset);
   }, [circumference, boundedPct]);
 
   return (
@@ -83,7 +98,7 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           style={{
-            transition: "stroke-dashoffset 1s cubic-bezier(0.34, 1.2, 0.64, 1)",
+            transition: `stroke-dashoffset ${ringMs}ms cubic-bezier(0.34, 1.2, 0.64, 1)`,
           }}
         />
       </svg>
@@ -91,6 +106,7 @@ export default function CalorieRing({ consumed = 0, goal = 2000, size = 160 }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <AnimatedNumber
           value={displayConsumed}
+          duration={numberMs}
           className="text-4xl font-bold font-display"
           style={{ color: "var(--text-primary)", transition: "color 1s ease" }}
         />

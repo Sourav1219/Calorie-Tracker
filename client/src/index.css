@@ -750,20 +750,23 @@ input[type="number"] {
   animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Full page-push: slides in from the right edge like navigating to a new tab */
+/* Add-food panel: fades in with a small settle so the new page blends in
+   smoothly instead of a full-width sheet sweeping across the current page. */
 @keyframes panelPushIn {
   from {
-    transform: translateX(100%);
+    opacity: 0;
+    transform: translateX(16px) scale(0.994);
   }
 
   to {
-    transform: translateX(0);
+    opacity: 1;
+    transform: translateX(0) scale(1);
   }
 }
 
 .animate-panel-push {
-  animation: panelPushIn 0.32s cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
-  will-change: transform;
+  animation: panelPushIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
 }
 
 @keyframes slideInLeft {

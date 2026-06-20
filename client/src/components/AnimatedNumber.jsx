@@ -4,6 +4,7 @@ export default function AnimatedNumber({
   value = 0,
   className,
   style,
+  duration = 520,
   format = (v) => Math.round(v).toLocaleString(),
 }) {
   const [display, setDisplay] = useState(value);
@@ -15,7 +16,6 @@ export default function AnimatedNumber({
     const to = value;
     if (from === to) return;
 
-    const duration = 520;
     const startTime = performance.now();
 
     const tick = (now) => {
@@ -34,7 +34,7 @@ export default function AnimatedNumber({
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [value]);
+  }, [value, duration]);
 
   return <span className={className} style={style}>{format(display)}</span>;
 }

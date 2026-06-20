@@ -46,6 +46,21 @@ function openModal(entry) {
   window.history.pushState({ pureintakeModal: true }, "");
 }
 
+/**
+ * Drop all tracked modal entries WITHOUT issuing history.back().
+ *
+ * Call this synchronously right before a programmatic navigate() that closes
+ * the modal(s) by changing the route. The navigate's own pushState overwrites
+ * our dummy history entries, so also firing history.back() here would race the
+ * navigation — history.back() commits asynchronously and can land the user on a
+ * previous page (e.g. Water instead of the Meal Log). Emptying the stack makes
+ * each pending closeModal() a no-op (its entry is no longer found), so no stray
+ * history.back() fires and the navigate is the single, deterministic outcome.
+ */
+export function dismissModalsForNavigation() {
+  modalStack.length = 0;
+}
+
 function closeModal(entry) {
   const idx = modalStack.lastIndexOf(entry);
   // Already removed by a back navigation — nothing to undo.

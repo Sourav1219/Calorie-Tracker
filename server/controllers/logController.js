@@ -59,15 +59,37 @@ async function buildLogPayload(dailyLog) {
 		return acc;
 	}, {});
 
+	// Derive the day's totals from the actual entries we just loaded rather than
+	// the stored counters on DailyLog. The counters are maintained incrementally
+	// (delta on each add/delete) and can drift out of sync with the real entries
+	// — e.g. when a background create races a reset, or a decrement is missed —
+	// which surfaces as phantom "extra" calories/items on the dashboard. Summing
+	// the entries makes the ring & macros always match the visible meal list.
+	const round2 = (n) => Number(n.toFixed(2));
+	const totals = meals.reduce(
+		(acc, meal) => {
+			acc.calories += meal.calories || 0;
+			acc.proteinG += meal.proteinG || 0;
+			acc.carbsG += meal.carbsG || 0;
+			acc.fatG += meal.fatG || 0;
+			return acc;
+		},
+		{ calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+	);
+	const totalWaterMl = waterEntries.reduce(
+		(sum, entry) => sum + (entry.amountMl || 0),
+		0
+	);
+
 	return {
 		id: dailyLog._id,
 		date: dailyLog.date,
 		userId: dailyLog.userId,
-		totalCalories: dailyLog.totalCalories,
-		totalProteinG: dailyLog.totalProteinG,
-		totalCarbsG: dailyLog.totalCarbsG,
-		totalFatG: dailyLog.totalFatG,
-		totalWaterMl: dailyLog.totalWaterMl,
+		totalCalories: round2(totals.calories),
+		totalProteinG: round2(totals.proteinG),
+		totalCarbsG: round2(totals.carbsG),
+		totalFatG: round2(totals.fatG),
+		totalWaterMl,
 		meals,
 		groupedMeals,
 		waterEntries: waterEntries.map((entry) => ({

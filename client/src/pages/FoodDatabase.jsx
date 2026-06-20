@@ -7,6 +7,7 @@ import { useMealSections } from "../context/MealSectionContext";
 import FoodCard from "../components/NutritionCard";
 import FoodDetailModal from "../components/FoodDetailModal";
 import AddCustomFoodForm from "../components/AddCustomFoodForm";
+import { dismissModalsForNavigation } from "../hooks/useModalHistory";
 
 function SkeletonPulse({ count = 4 }) {
   return (
@@ -143,16 +144,25 @@ export default function FoodDatabase() {
   }, [debouncedQuery, selectedCategory, refreshTrigger]);
 
   const handleAddToMeal = async (food, quantity, unit, mealType) => {
-    // Determine the section ID to log to. Fallback to first section if nothing specified.
-    const targetSectionId = String(mealType || mealFromQuery || (sections[0]?._id) || "snacks").trim();
-    const section = sections.find(s => s._id === targetSectionId);
-    const sectionName = section ? section.name : "Meal";
+    // Determine the section ID to log to. Fallback to the first section.
+    const targetSectionId = String(mealType || mealFromQuery || sections[0]?._id || "").trim();
+    const section = sections.find((s) => s._id === targetSectionId);
+    if (!targetSectionId || !section) {
+      toast.error("No meal section available to add to");
+      return;
+    }
+
+    // Clear the modal-history entries up front so the popup's own history.back()
+    // doesn't race the navigate() below and dump us on the wrong page (e.g.
+    // Water). With the stack empty, navigate('/log') is the only history op.
+    dismissModalsForNavigation();
 
     // The detail popup closes instantly (fire-and-forget) so it no longer
-    // surfaces errors — handle them here.
+    // surfaces errors — handle them here. Save first so the Meal Log's fetch
+    // on mount already includes the new item.
     try {
       await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-      toast.success(`${food.name} added to ${sectionName}`);
+      toast.success(`${food.name} added to ${section.name}`);
       navigate(`/log?meal=${targetSectionId}`);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to add food");

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Search, SearchX } from "lucide-react";
 import { foodAPI } from "../utils/api";
@@ -36,41 +36,51 @@ function SkeletonPulse({ count = 4 }) {
 
 export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType }) {
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   // The full catalog (seeded from the login prefetch). Every section is just a
   // client-side filter of this, so switching sections is instant — no fetch.
   const [allFoods, setAllFoods] = useState(() => getCache("food:list:all") ?? null);
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [categories, setCategories] = useState(() => getCache("food:categories") ?? []);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  const isSearching = debouncedQuery.trim().length > 0;
+  const trimmedQuery = query.trim();
+  const isSearching = trimmedQuery.length > 0;
 
-  // Visible list + loading are derived: searching hits the API; browsing a
-  // section (or "All") just filters the cached catalog — instant, no loading.
-  const results = isSearching
-    ? searchResults
-    : selectedCategory
-      ? (allFoods || []).filter((food) => food.category === selectedCategory)
-      : (allFoods || []);
-  const isLoading = isSearching ? isSearchLoading : allFoods === null;
+  // Searching now filters the already-cached catalog client-side (same as
+  // section browsing) so results appear instantly as you type — no network
+  // round-trip, no debounce delay. Ranked: name prefix > name match > category.
+  const results = useMemo(() => {
+    const list = allFoods || [];
+    if (isSearching) {
+      const q = trimmedQuery.toLowerCase();
+      const scored = [];
+      for (const food of list) {
+        const name = (food.name || "").toLowerCase();
+        const category = (food.category || "").toLowerCase();
+        let score = -1;
+        if (name.startsWith(q)) score = 0;
+        else if (name.includes(q)) score = 1;
+        else if (category.includes(q)) score = 2;
+        if (score >= 0) scored.push({ food, score });
+      }
+      scored.sort((a, b) => a.score - b.score);
+      return scored.map((entry) => entry.food);
+    }
+    if (selectedCategory) {
+      return list.filter((food) => food.category === selectedCategory);
+    }
+    return list;
+  }, [allFoods, isSearching, trimmedQuery, selectedCategory]);
+
+  // Only loading state left is the very first catalog fetch on a cold open.
+  const isLoading = allFoods === null;
 
   // Hardware back / swipe-back closes this sheet instead of leaving the page.
   useModalHistory(isOpen, onClose);
-
-  // Debounce search input
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedQuery(query), 300);
-    return () => clearTimeout(handler);
-  }, [query]);
 
   // Open/close lifecycle + load categories for browsing
   useEffect(() => {
     if (!isOpen) {
       setQuery("");
-      setDebouncedQuery("");
-      setSearchResults([]);
       setSelectedCategory(null);
       return;
     }
@@ -114,30 +124,6 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
     };
   }, [isOpen]);
 
-  // Live search against the API — only while the user is actually typing.
-  useEffect(() => {
-    if (!isOpen || !isSearching) {
-      setSearchResults([]);
-      return;
-    }
-    let active = true;
-    setIsSearchLoading(true);
-    foodAPI
-      .search(debouncedQuery)
-      .then((res) => {
-        if (active) setSearchResults(res.data.results || []);
-      })
-      .catch(() => {
-        if (active) setSearchResults([]);
-      })
-      .finally(() => {
-        if (active) setIsSearchLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [isOpen, isSearching, debouncedQuery]);
-
   if (!isOpen) return null;
 
   // Render inside the app shell (not document.body) so the fixed overlay is
@@ -177,7 +163,6 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="input-field search-input-focus pl-10 pr-9"
-              autoFocus
             />
             {query && (
               <button
@@ -225,7 +210,7 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
           {isLoading ? (
             <SkeletonPulse count={5} />
           ) : results.length > 0 ? (
-            <div className="space-y-2" key={`${debouncedQuery}-${selectedCategory}`}>
+            <div className="space-y-2" key={`${trimmedQuery}-${selectedCategory}`}>
               {results.map((food, index) => (
                 <button
                   key={food.id}
@@ -240,7 +225,7 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
                 >
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-text truncate">
-                      {highlightMatch(food.name, debouncedQuery)}
+                      {highlightMatch(food.name, trimmedQuery)}
                     </p>
                     <p className="text-xs text-muted truncate">{food.category}</p>
                   </div>
@@ -262,7 +247,7 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
                 </div>
               </div>
               <p className="text-sm text-muted">
-                {isSearching ? <>No foods found for &quot;{debouncedQuery}&quot;</> : "No foods in this section yet"}
+                {isSearching ? <>No foods found for &quot;{trimmedQuery}&quot;</> : "No foods in this section yet"}
               </p>
             </div>
           )}

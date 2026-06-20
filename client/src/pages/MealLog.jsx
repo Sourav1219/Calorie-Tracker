@@ -12,8 +12,9 @@ import FoodDetailModal from "../components/FoodDetailModal";
 
 export default function MealLog() {
   const [searchParams] = useSearchParams();
+  const mealParam = searchParams.get("meal");
   const { sections } = useMealSections();
-  const [activeTab, setActiveTab] = useState(searchParams.get("meal") || "");
+  const [activeTab, setActiveTab] = useState(mealParam || "");
   // Seed today's meals from the per-session cache for an instant revisit.
   const mealsCacheKey = `meals:${getLocalDateKey(new Date())}`;
   const [meals, setMeals] = useState(() => (hasCache(mealsCacheKey) ? getCache(mealsCacheKey) : []));
@@ -21,6 +22,15 @@ export default function MealLog() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
+
+  // Follow the ?meal= query param to its section tab — even when the page is
+  // already mounted (the useState initializer only runs on first mount), so a
+  // re-navigation like /log?meal=dinner always lands on the right tab.
+  useEffect(() => {
+    if (mealParam && sections.some((s) => s._id === mealParam)) {
+      setActiveTab(mealParam);
+    }
+  }, [mealParam, sections]);
 
   // Make sure activeTab is valid, or fallback to the first section
   useEffect(() => {
