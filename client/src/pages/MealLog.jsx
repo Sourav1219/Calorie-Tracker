@@ -87,6 +87,12 @@ export default function MealLog() {
       fatG: preview.fatG || 0,
     };
     setMeals((cur) => [optimisticMeal, ...cur]);
+    // Patch the dashboard's cached log NOW, optimistically — not after the save
+    // returns. The row shows here instantly, so you may switch to the dashboard
+    // before the create round-trips; doing this immediately means its calorie
+    // ring already shows the new total on arrival (no stale value that jumps
+    // once a background fetch lands).
+    dashCacheAddMeal(optimisticMeal);
 
     try {
       const res = await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
@@ -100,12 +106,13 @@ export default function MealLog() {
       const saved = res.data?.meal;
       if (saved) {
         setMeals((cur) => cur.map((m) => (m.id === tempId ? saved : m)));
-        // Patch the dashboard's cached log too, so its calorie ring is already
-        // correct the next time it's opened — no post-visit fetch lag.
+        // Swap the optimistic entry in the dashboard cache for the exact saved one.
+        dashCacheRemoveMeal(optimisticMeal);
         dashCacheAddMeal(saved);
       }
     } catch (error) {
       setMeals((cur) => cur.filter((m) => m.id !== tempId)); // revert
+      dashCacheRemoveMeal(optimisticMeal); // undo the optimistic cache patch
       toast.error(error.response?.data?.error || "Failed to add food");
     }
   };
