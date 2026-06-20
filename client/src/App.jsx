@@ -31,9 +31,12 @@ const AdminBulkUpload = lazy(pageImport.AdminBulkUpload);
 const Login           = lazy(pageImport.Login);
 const Register        = lazy(pageImport.Register);
 
-import Navbar from "./components/Navbar";
-import BottomNav from "./components/BottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+// The top/bottom nav only render when logged in, so keep them (and their icons)
+// out of the initial bundle the public login page downloads.
+const Navbar    = lazy(() => import("./components/Navbar"));
+const BottomNav = lazy(() => import("./components/BottomNav"));
 
 function App() {
   const { isLoggedIn, isLoading, user } = useUser();
@@ -109,7 +112,9 @@ function App() {
 
   return (
     <div className="app-mobile-shell">
-      {isLoggedIn && !onOnboardingScreen && <Navbar />}
+      {isLoggedIn && !onOnboardingScreen && (
+        <Suspense fallback={null}><Navbar /></Suspense>
+      )}
 
       <main className="app-mobile-content" ref={contentRef}>
         <div key={location.pathname} className="page-transition">
@@ -136,7 +141,9 @@ function App() {
         </div>
       </main>
 
-      {isLoggedIn && !onOnboardingScreen && <BottomNav />}
+      {isLoggedIn && !onOnboardingScreen && (
+        <Suspense fallback={null}><BottomNav /></Suspense>
+      )}
     </div>
   );
 }
