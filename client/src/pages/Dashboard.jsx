@@ -406,6 +406,7 @@ export default function Dashboard() {
       <header className="flex items-center justify-between py-2 mb-4">
         <button
           onClick={() => changeDate(-1)}
+          aria-label="Previous day"
           className="glass-green w-10 h-10 rounded-xl flex items-center justify-center no-spring active:scale-95"
         >
           <ChevronLeft className="w-5 h-5" style={{ color: "var(--green-primary)" }} />
@@ -423,6 +424,7 @@ export default function Dashboard() {
         <button
           onClick={() => changeDate(1)}
           disabled={isToday}
+          aria-label="Next day"
           className="glass-green w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-30 no-spring active:scale-95"
         >
           <ChevronRight className="w-5 h-5" style={{ color: "var(--green-primary)" }} />

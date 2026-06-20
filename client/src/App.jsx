@@ -111,7 +111,7 @@ function App() {
     <div className="app-mobile-shell">
       {isLoggedIn && !onOnboardingScreen && <Navbar />}
 
-      <div className="app-mobile-content" ref={contentRef}>
+      <main className="app-mobile-content" ref={contentRef}>
         <div key={location.pathname} className="page-transition">
         <Suspense fallback={null}>
         <Routes location={location}>
@@ -134,7 +134,7 @@ function App() {
         </Routes>
         </Suspense>
         </div>
-      </div>
+      </main>
 
       {isLoggedIn && !onOnboardingScreen && <BottomNav />}
     </div>

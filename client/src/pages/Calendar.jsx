@@ -149,6 +149,7 @@ export default function Calendar() {
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={handlePrevMonth}
+            aria-label="Previous month"
             className="glass-green w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-110 active:scale-95 flex-shrink-0"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -156,6 +157,7 @@ export default function Calendar() {
           <h2 className="text-lg font-bold truncate px-2 text-center flex-1" style={{ color: "var(--text-primary)" }}>{monthNames[month]} {year}</h2>
           <button
             onClick={handleNextMonth}
+            aria-label="Next month"
             className="glass-green w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-110 active:scale-95 flex-shrink-0"
           >
             <ChevronRight className="w-5 h-5" />
@@ -241,8 +243,9 @@ export default function Calendar() {
               <h3 className="text-lg font-black text-[var(--text-primary)] truncate pr-4">
                 {new Date(selectedDateKey + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </h3>
-              <button 
+              <button
                 onClick={() => setSelectedDateKey(null)}
+                aria-label="Close"
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
                 style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
               >

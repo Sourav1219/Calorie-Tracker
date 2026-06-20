@@ -192,6 +192,7 @@ export default function MealLog() {
         {/* Edit Button */}
         <button
           onClick={() => setIsSheetOpen(true)}
+          aria-label="Edit meal sections"
           className="glass-green flex items-center justify-center min-w-[36px] min-h-[36px] rounded-xl flex-shrink-0 ml-1 no-spring active:scale-95"
         >
           <Edit2 className="w-4 h-4" />
@@ -274,6 +275,7 @@ export default function MealLog() {
               </div>
               <button
                 onClick={() => handleDelete(meal.id)}
+                aria-label={`Remove ${meal.foodItem?.name || "item"}`}
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 flex-shrink-0"
                 style={{
                   background: "linear-gradient(180deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.07) 100%)",

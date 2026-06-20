@@ -146,6 +146,7 @@ export default function FoodSearchModal({ isOpen, onClose, onSelect, mealType })
           <h3 className="font-bold text-text capitalize">Add to {mealType || "meal"}</h3>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 no-spring flex-shrink-0"
             style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
           >

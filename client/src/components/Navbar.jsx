@@ -136,6 +136,7 @@ export default function Navbar() {
           <div ref={buttonRef}>
             <button
               onClick={togglePanel}
+              aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
               className="bell-button-group w-11 h-11 rounded-full flex items-center justify-center transition-colors relative no-spring"
               style={{ background: "var(--lg-control-bg)", border: "1px solid var(--lg-control-border)", boxShadow: "inset 0 1px 0 var(--lg-hl-top)", color: "var(--text-muted)" }}
             >
@@ -155,6 +156,7 @@ export default function Navbar() {
           <button
             id="navbar-avatar"
             onClick={() => navigate("/profile")}
+            aria-label="Open profile"
             className="glass-green w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 hover:scale-[1.05] active:scale-95 overflow-hidden no-spring"
           >
             {user?.photoUrl ? (

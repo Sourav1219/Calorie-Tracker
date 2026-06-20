@@ -144,7 +144,7 @@ export default function Login() {
                   onChange={(e) => setField("password", e.target.value)}
                   className="input-field pl-10 pr-10 text-sm h-11"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 z-10 flex items-center justify-center no-spring" style={{ color: "var(--text-muted)" }}>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-3 z-10 flex items-center justify-center no-spring" style={{ color: "var(--text-muted)" }}>
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>

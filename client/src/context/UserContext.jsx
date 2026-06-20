@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import api, { authAPI, clearAuthToken } from "../utils/api";
+import api, { authAPI, clearAuthToken, getAuthToken } from "../utils/api";
 
 const UserContext = createContext(null);
 
@@ -43,6 +43,15 @@ export function UserProvider({ children }) {
       // Optimistically render the cached profile (if any) for an instant UI.
       const cached = getStoredUser();
       if (cached) setUser(cached);
+
+      // A fresh visitor with neither a cached profile nor a stored token can't
+      // have a session — skip the /auth/me probe entirely. (Logged-in users
+      // always have one of the two.) This avoids the 401 that the browser would
+      // otherwise log to the console on the public login page, and saves a call.
+      if (!cached && !getAuthToken()) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const res = await api.get("/auth/me");

@@ -1,0 +1,12 @@
+# PureIntake
+
+> PureIntake is a mobile-first web app for tracking daily calories, macros, meals and water intake against personal nutrition goals.
+
+PureIntake lets you log foods from a searchable database, track water intake, browse daily and calendar history, and monitor progress toward calorie and macro targets. The app is account-based; most features require signing in, and each user's data is private.
+
+## Core
+- [Home](https://www.pureintake.app/): Landing and sign-in page
+
+## Notes
+- The app requires authentication; there is no public user content to index beyond the landing page.
+- The backend API is private and not intended for crawling.

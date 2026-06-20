@@ -138,6 +138,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             </div>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
             >
@@ -296,6 +297,7 @@ export default function FoodDetailModal({ food, onClose, onAddToMeal, targetSect
             </div>
             <button
               onClick={() => setShowMealSelector(false)}
+              aria-label="Back"
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
               style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
             >
