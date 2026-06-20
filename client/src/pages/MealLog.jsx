@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Search, Trash2, Edit2, UtensilsCrossed } from "lucide-react";
+import { Trash2, Edit2, UtensilsCrossed } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { mealsAPI, getLocalDateKey } from "../utils/api";
@@ -197,20 +197,6 @@ export default function MealLog() {
           <Edit2 className="w-4 h-4" />
         </button>
       </div>
-
-
-
-      {/* Search Bar — opens an in-place search sheet (no page jump) */}
-      <button
-        type="button"
-        onClick={() => setSearchOpen(true)}
-        className="relative w-full mb-6 no-spring"
-      >
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10" style={{ color: "var(--text-muted)" }} />
-        <span className="input-field pl-10 flex items-center h-11" style={{ color: "var(--text-muted)" }}>
-          Search food to add...
-        </span>
-      </button>
 
       {/* Summary Card */}
       <div className="card mb-4 flex items-center justify-between">
