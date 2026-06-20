@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import toast from "react-hot-toast";
-import api from "../utils/api";
+import api, { setAuthToken } from "../utils/api";
 import { useUser } from "../context/UserContext";
 import BrandMark from "../components/BrandMark";
 import GoogleSignInButton from "../components/GoogleSignInButton";
@@ -50,8 +50,9 @@ export default function Login() {
         rememberMe,
       });
 
-      // Auth token is set by the server as an httpOnly cookie; we only
-      // cache the returned profile for instant UI.
+      // Auth token is set by the server as an httpOnly cookie; we also keep a
+      // bearer-token copy for browsers that block the cross-site cookie (Safari).
+      setAuthToken(res.data.token, rememberMe);
       login(res.data.user, rememberMe);
 
       // ✅ Redirect

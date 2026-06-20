@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import api, { authAPI } from "../utils/api";
+import api, { authAPI, clearAuthToken } from "../utils/api";
 
 const UserContext = createContext(null);
 
@@ -84,6 +84,7 @@ export function UserProvider({ children }) {
     }
     setUser(null);
     clearStoredUser();
+    clearAuthToken();
 
     if (window.location.pathname !== "/login") {
       window.location.href = "/login";

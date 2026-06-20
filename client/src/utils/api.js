@@ -23,8 +23,43 @@ export const getLocalDateKey = (date = new Date()) =>
     day: "2-digit",
   }).format(new Date(date));
 
-// Auth now travels in an httpOnly cookie (withCredentials), so there's no
-// token to attach from JS. No request interceptor needed.
+// ── Bearer-token fallback ─────────────────────────────────────────────────
+// The httpOnly cookie is the primary auth. But some browsers — notably iOS
+// Safari — block our cross-site auth cookie as a third-party cookie, which
+// would log the user out on every request. As a fallback we also keep a copy
+// of the JWT the server returns at login and send it in the Authorization
+// header; the backend's authMiddleware already accepts either the cookie or
+// this header. (localStorage is XSS-exposed, unlike the httpOnly cookie, so
+// this is a deliberate secondary path to keep cookie-blocking browsers working.)
+const TOKEN_KEY = "auth_token";
+
+export function getAuthToken() {
+  return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+}
+
+export function setAuthToken(token, rememberMe = true) {
+  if (!token) return;
+  const storage = rememberMe ? localStorage : sessionStorage;
+  const other = rememberMe ? sessionStorage : localStorage;
+  other.removeItem(TOKEN_KEY);
+  storage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
+// Attach the bearer token (when present) to every request, so auth still works
+// when the browser refuses to send our cross-site cookie.
+api.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 // Response interceptor — handle 401 errors globally
 api.interceptors.response.use(
@@ -38,10 +73,11 @@ api.interceptors.response.use(
     }
 
     if (error.response && error.response.status === 401) {
-      // Session expired/invalid — drop the cached profile and bounce to login.
-      // (The cookie itself is httpOnly; the server clears it on logout.)
+      // Session expired/invalid — drop the cached profile + bearer token and
+      // bounce to login. (The cookie itself is httpOnly; cleared on logout.)
       localStorage.removeItem("user");
       sessionStorage.removeItem("user");
+      clearAuthToken();
 
       // Avoid a redirect loop on the auth-check call itself.
       const isAuthCheck = error.config?.url?.includes("/auth/me");

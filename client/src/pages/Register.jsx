@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import toast from "react-hot-toast";
-import api, { authAPI } from "../utils/api";
+import api, { authAPI, setAuthToken } from "../utils/api";
 import { useUser } from "../context/UserContext";
 import { isProfileComplete } from "../utils/user";
 import { calculateMacroTargets } from "../utils/macroTargets";
@@ -263,7 +263,9 @@ export default function Register() {
           password: form.password,
           ...stats,
         });
-        // Server set the httpOnly auth cookie; just cache the profile.
+        // Server set the httpOnly auth cookie; also keep a bearer-token copy
+        // for browsers that block the cross-site cookie (Safari).
+        setAuthToken(res.data.token, true);
         login(res.data.user);
         toast.success("Account created! Welcome to PureIntake.");
         navigate("/dashboard");

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { authAPI } from "../utils/api";
+import { authAPI, setAuthToken } from "../utils/api";
 import { useUser } from "../context/UserContext";
 import { isProfileComplete } from "../utils/user";
 
@@ -65,6 +65,8 @@ export default function GoogleSignInButton({ mode = "signin" }) {
         // Pass the page intent so the server only signs in existing accounts
         // ("signin") or only creates new ones ("signup") — never silently both.
         const res = await authAPI.googleLogin(response.credential, mode);
+        // Also keep a bearer-token copy for cookie-blocking browsers (Safari).
+        setAuthToken(res.data.token, true);
         login(res.data.user, true);
         // New Google users have no body stats yet → finish onboarding first.
         navigate(isProfileComplete(res.data.user) ? "/dashboard" : "/register");
