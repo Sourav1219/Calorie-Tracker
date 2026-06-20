@@ -63,15 +63,20 @@ export default function Calendar() {
       setSelectedLog(null);
       return;
     }
+    let active = true;
     const fetchSelectedLog = async () => {
       try {
         const res = await logsAPI.getByDate(selectedDateKey);
+        if (!active) return;
         setSelectedLog(res.data.log);
+        // Cache the detailed day log so reopening it is instant (no refetch flash).
+        setCache(`day:${selectedDateKey}`, res.data.log);
       } catch (error) {
         console.error("Failed to load selected log:", error);
       }
     };
     fetchSelectedLog();
+    return () => { active = false; };
   }, [selectedDateKey]);
 
   const logsByDate = useMemo(() => new Map(monthLogs.map((log) => [log.date, log])), [monthLogs]);
@@ -103,7 +108,12 @@ export default function Calendar() {
 
   const handleDateClick = (dateKey) => {
     if (selectedDateKey === dateKey) return;
-    setSelectedLog(null);
+    // Seed the panel instantly instead of flashing "No data logged" while the
+    // detailed fetch runs: prefer a cached full day log, otherwise fall back to
+    // the month grid's totals (already loaded) so calories/water + bars show
+    // immediately. The detailed meal/water breakdown then fills in on fetch.
+    const cachedDay = getCache(`day:${dateKey}`);
+    setSelectedLog(cachedDay || logsByDate.get(dateKey) || null);
     setSelectedDateKey(dateKey);
   };
 
@@ -311,7 +321,9 @@ export default function Calendar() {
 
                     <div className="w-full">
                       <h4 className="text-[var(--text-muted)] font-bold text-sm uppercase tracking-wider mb-3">Meals</h4>
-                      {Object.keys(cLog.groupedMeals || {}).length === 0 ? (
+                      {!cLog.groupedMeals ? (
+                        <p className="text-sm text-[var(--text-muted)] font-medium">Loading meals…</p>
+                      ) : Object.keys(cLog.groupedMeals).length === 0 ? (
                         <p className="text-sm text-[var(--text-muted)] font-medium">No meals logged.</p>
                       ) : (
                         <div className="space-y-3 w-full">
@@ -391,7 +403,9 @@ export default function Calendar() {
 
                     <div className="w-full">
                       <h4 className="text-[var(--text-muted)] font-bold text-sm uppercase tracking-wider mb-3">Entries</h4>
-                      {(!cLog.waterEntries || cLog.waterEntries.length === 0) ? (
+                      {!cLog.waterEntries ? (
+                        <p className="text-sm text-[var(--text-muted)] font-medium">Loading water…</p>
+                      ) : cLog.waterEntries.length === 0 ? (
                         <p className="text-sm text-[var(--text-muted)] font-medium">No water logged.</p>
                       ) : (
                         <div className="space-y-3 w-full">
