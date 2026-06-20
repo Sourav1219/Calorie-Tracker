@@ -173,6 +173,15 @@ export default function Dashboard() {
     load();
   }, [load]);
 
+  // Mirror the live log into its cache so optimistic add/delete survives a quick
+  // tab revisit. Guarded by date so switching days never writes the previous
+  // day's data under the new day's key (load() refreshes it right after).
+  useEffect(() => {
+    if (log && log.date === getLocalDateKey(targetDate)) {
+      setCache(`dash:${getLocalDateKey(targetDate)}`, log);
+    }
+  }, [log, targetDate]);
+
   const changeDate = (days) => {
     const newDate = new Date(targetDate);
     newDate.setDate(newDate.getDate() + days);
@@ -238,23 +247,79 @@ export default function Dashboard() {
     const targetSectionId = String(mealType || activeMealId || sections[0]?._id || "").trim();
     const section = sections.find((s) => s._id === targetSectionId);
 
-    // Reflect it in today's totals immediately (the ring animates up), then save
-    // in the background and reconcile with the server (or revert on failure).
     toast.success(`${food.name} added to ${section?.name || "meal"}`);
-    setLog((cur) => ({
-      ...(cur || {}),
-      totalCalories: (cur?.totalCalories || 0) + (preview.calories || 0),
-      totalProteinG: (cur?.totalProteinG || 0) + (preview.proteinG || 0),
-      totalCarbsG: (cur?.totalCarbsG || 0) + (preview.carbsG || 0),
-      totalFatG: (cur?.totalFatG || 0) + (preview.fatG || 0),
-    }));
+
+    // Optimistic row for the breakdown + a matching bump to the ring/macros.
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMeal = {
+      id: tempId,
+      mealType: targetSectionId,
+      quantity,
+      unit,
+      calories: preview.calories || 0,
+      proteinG: preview.proteinG || 0,
+      carbsG: preview.carbsG || 0,
+      fatG: preview.fatG || 0,
+      foodItem: { name: food.name },
+    };
+
+    setLog((cur) => {
+      const base = cur || {};
+      const grouped = { ...(base.groupedMeals || {}) };
+      grouped[targetSectionId] = [optimisticMeal, ...(grouped[targetSectionId] || [])];
+      return {
+        ...base,
+        totalCalories: (base.totalCalories || 0) + (preview.calories || 0),
+        totalProteinG: (base.totalProteinG || 0) + (preview.proteinG || 0),
+        totalCarbsG: (base.totalCarbsG || 0) + (preview.carbsG || 0),
+        totalFatG: (base.totalFatG || 0) + (preview.fatG || 0),
+        meals: [optimisticMeal, ...(base.meals || [])],
+        groupedMeals: grouped,
+      };
+    });
 
     try {
-      await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-      await load();
+      const res = await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
+      const saved = res.data?.meal;
+      if (!saved) return;
+      // Reconcile against the authoritative create response — swap the temp row
+      // for the saved one and correct the totals by the rounding delta. We do
+      // NOT reload here: an immediate refetch can return a stale read-after-write
+      // response missing the new item, which would revert the ring and drop the
+      // row until a later reload (the bug this mirrors from the Meal Log).
+      const swap = (m) => (m.id === tempId ? saved : m);
+      setLog((cur) => {
+        if (!cur) return cur;
+        const grouped = { ...(cur.groupedMeals || {}) };
+        for (const key of Object.keys(grouped)) grouped[key] = grouped[key].map(swap);
+        return {
+          ...cur,
+          totalCalories: (cur.totalCalories || 0) + ((saved.calories || 0) - (preview.calories || 0)),
+          totalProteinG: (cur.totalProteinG || 0) + ((saved.proteinG || 0) - (preview.proteinG || 0)),
+          totalCarbsG: (cur.totalCarbsG || 0) + ((saved.carbsG || 0) - (preview.carbsG || 0)),
+          totalFatG: (cur.totalFatG || 0) + ((saved.fatG || 0) - (preview.fatG || 0)),
+          meals: (cur.meals || []).map(swap),
+          groupedMeals: grouped,
+        };
+      });
     } catch (error) {
+      // Revert the optimistic add (remove the temp row + subtract its totals).
+      const drop = (list) => (list || []).filter((m) => m.id !== tempId);
+      setLog((cur) => {
+        if (!cur) return cur;
+        const grouped = { ...(cur.groupedMeals || {}) };
+        for (const key of Object.keys(grouped)) grouped[key] = drop(grouped[key]);
+        return {
+          ...cur,
+          totalCalories: (cur.totalCalories || 0) - (preview.calories || 0),
+          totalProteinG: (cur.totalProteinG || 0) - (preview.proteinG || 0),
+          totalCarbsG: (cur.totalCarbsG || 0) - (preview.carbsG || 0),
+          totalFatG: (cur.totalFatG || 0) - (preview.fatG || 0),
+          meals: drop(cur.meals),
+          groupedMeals: grouped,
+        };
+      });
       toast.error(error.response?.data?.error || "Failed to add food");
-      await load();
     }
   };
 
