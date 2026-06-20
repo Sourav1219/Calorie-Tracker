@@ -88,8 +88,18 @@ export default function MealLog() {
     setMeals((cur) => [optimisticMeal, ...cur]);
 
     try {
-      await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
-      await fetchMeals(); // reconcile the optimistic row with the saved one
+      const res = await mealsAPI.create({ foodItemId: food.id, quantity, unit, mealType: targetSectionId });
+      // Reconcile using the server's authoritative create response — swap the
+      // optimistic temp row for the saved one (real id + exact nutrition).
+      // We deliberately do NOT refetch the whole day here: an immediate refetch
+      // right after the write can return a stale response (read-after-write lag
+      // / intermediary cache) that's missing the new item, which would wipe the
+      // row we just added and make it look like nothing was logged until a
+      // later reload. The create response always contains the new meal.
+      const saved = res.data?.meal;
+      if (saved) {
+        setMeals((cur) => cur.map((m) => (m.id === tempId ? saved : m)));
+      }
     } catch (error) {
       setMeals((cur) => cur.filter((m) => m.id !== tempId)); // revert
       toast.error(error.response?.data?.error || "Failed to add food");
